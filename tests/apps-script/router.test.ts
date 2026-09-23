@@ -44,6 +44,11 @@ describe("Apps Script router", () => {
       scale: 1, rotationOffset: 0, version: 1, sortOrder: 1,
       enabled: false, updatedAt: "2026-09-23T00:00:00.000Z",
     }),
+    getAdminDashboard: () => ({
+      challenge,
+      summary: { totalStudents: 0, completedToday: 0, missingToday: 0, completedChallenge: 0 },
+      students: [],
+    }),
   };
   const router = createRouter(services);
 
@@ -102,5 +107,13 @@ describe("Apps Script router", () => {
       ok: false,
       error: { code: "ADMIN_SESSION_EXPIRED", message: "관리자 로그인이 필요합니다." },
     });
+  });
+
+  it("routes the authenticated teacher dashboard", () => {
+    expect(router({
+      action: "admin.dashboard.get",
+      auth: { adminToken: "a".repeat(32) },
+      payload: { challengeId: "ABC123" },
+    })).toMatchObject({ ok: true, data: { challenge, students: [] } });
   });
 });

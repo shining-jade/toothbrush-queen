@@ -45,6 +45,12 @@ export class StudentRepository {
     return row ? fromRow(row) : null;
   }
 
+  listByChallenge(challengeId: string) {
+    return this.gateway.readAll("Students")
+      .filter((row) => String(row[1]) === challengeId)
+      .map(fromRow);
+  }
+
   findByIdentity(challengeId: string, grade: string, classNo: string, studentNo: string, name: string) {
     const identity = [challengeId, grade, classNo, studentNo, name].map(normalize);
     const row = this.gateway.readAll("Students").find((candidate) =>

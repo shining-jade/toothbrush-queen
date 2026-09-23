@@ -67,6 +67,10 @@ export const AdminSkinEnabledInputSchema = z.object({
   enabled: z.boolean(),
 }).strict();
 
+export const AdminDashboardInputSchema = z.object({
+  challengeId: ChallengeIdSchema,
+}).strict();
+
 export const ChallengeSchema = z
   .object({
     challengeId: ChallengeIdSchema,
@@ -81,6 +85,30 @@ export const ChallengeSchema = z
     skins: z.array(PublicSkinSchema).max(100).optional(),
   })
   .strict();
+
+export const AdminStudentSummarySchema = z.object({
+  studentId: z.string().min(1).max(64),
+  grade: z.string().min(1).max(20),
+  classNo: z.string().min(1).max(20),
+  studentNo: z.string().min(1).max(20),
+  name: z.string().min(1).max(40),
+  acceptedDays: z.number().int().nonnegative(),
+  targetDays: z.number().int().positive(),
+  completedToday: z.boolean(),
+  lastParticipationDate: z.string().date().nullable(),
+  participationStatus: z.enum(["completed", "completedToday", "missingToday", "noRecord"]),
+}).strict();
+
+export const AdminDashboardResultSchema = z.object({
+  challenge: ChallengeSchema,
+  summary: z.object({
+    totalStudents: z.number().int().nonnegative(),
+    completedToday: z.number().int().nonnegative(),
+    missingToday: z.number().int().nonnegative(),
+    completedChallenge: z.number().int().nonnegative(),
+  }).strict(),
+  students: z.array(AdminStudentSummarySchema).max(5000),
+}).strict();
 
 export const StudentProgressSchema = z
   .object({
@@ -200,6 +228,9 @@ export type AdminAssetUploadInput = z.infer<typeof AdminAssetUploadInputSchema>;
 export type AdminAssetUploadResult = z.infer<typeof AdminAssetUploadResultSchema>;
 export type AdminSkinDraft = z.infer<typeof AdminSkinDraftSchema>;
 export type AdminSkin = z.infer<typeof AdminSkinSchema>;
+export type AdminDashboardInput = z.infer<typeof AdminDashboardInputSchema>;
+export type AdminStudentSummary = z.infer<typeof AdminStudentSummarySchema>;
+export type AdminDashboardResult = z.infer<typeof AdminDashboardResultSchema>;
 export type StudentProgress = z.infer<typeof StudentProgressSchema>;
 export type JoinStudentInput = z.infer<typeof JoinStudentInputSchema>;
 export type SessionResumeInput = z.infer<typeof SessionResumeInputSchema>;

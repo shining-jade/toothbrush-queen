@@ -1,5 +1,6 @@
 import {
   AdminAssetUploadInputSchema,
+  AdminDashboardInputSchema,
   AdminLoginInputSchema,
   AdminSkinDraftSchema,
   AdminSkinEnabledInputSchema,
@@ -17,11 +18,13 @@ import {
   type StartAttemptResult,
   type StudentProgress,
   type AdminAssetUploadResult,
+  type AdminDashboardResult,
   type AdminLoginResult,
   type AdminSkin,
 } from "../../src/shared/contracts";
 import { z } from "zod";
 import { AdminAuthService } from "./domain/admin-auth-service";
+import { AdminDashboardService } from "./domain/admin-dashboard-service";
 import { AdminSkinService } from "./domain/admin-skin-service";
 import { ProgressService } from "./domain/progress-service";
 import { StudentSessionService } from "./domain/student-session-service";
@@ -52,6 +55,7 @@ export type RouterServices = {
   saveAdminSkin(token: string, input: Parameters<AdminSkinService["saveSkin"]>[1]): AdminSkin;
   listAdminSkins(token: string): AdminSkin[];
   setAdminSkinEnabled(token: string, skinId: string, enabled: boolean): AdminSkin;
+  getAdminDashboard(token: string, challengeId: string): AdminDashboardResult;
 };
 
 const errorMessages: Record<string, string> = {
@@ -141,6 +145,12 @@ export function createRouter(services: RouterServices) {
           request.auth?.adminToken ?? "", input.skinId, input.enabled,
         ) };
       }
+      if (request.action === "admin.dashboard.get") {
+        const input = AdminDashboardInputSchema.parse(request.payload);
+        return { ok: true, data: services.getAdminDashboard(
+          request.auth?.adminToken ?? "", input.challengeId,
+        ) };
+      }
       return failure("ACTION_NOT_FOUND");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -187,6 +197,10 @@ export function createProductionRouter() {
     new AppsScriptExclusiveLock(),
     security,
     now,
+  );
+  const adminDashboard = new AdminDashboardService(
+    adminAuth, challenges, students, completions, now,
+    (date, timeZone) => Utilities.formatDate(date, timeZone, "yyyy-MM-dd"),
   );
   const attemptTokens = new AttemptTokenService(
     new AppsScriptAttemptCrypto(secret), () => now().getTime(),
@@ -241,5 +255,6 @@ export function createProductionRouter() {
     saveAdminSkin: (token, input) => adminSkins.saveSkin(token, input),
     listAdminSkins: (token) => adminSkins.listSkins(token),
     setAdminSkinEnabled: (token, skinId, enabled) => adminSkins.setEnabled(token, skinId, enabled),
+    getAdminDashboard: (token, challengeId) => adminDashboard.get(token, challengeId),
   });
 }

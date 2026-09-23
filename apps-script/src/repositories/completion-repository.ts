@@ -49,6 +49,12 @@ export class CompletionRepository {
     return this.gateway.readAll("Completions").filter((row) => String(row[3]) === studentId).map(fromRow);
   }
 
+  listByChallenge(challengeId: string) {
+    return this.gateway.readAll("Completions")
+      .filter((row) => String(row[2]) === challengeId)
+      .map(fromRow);
+  }
+
   listAcceptedByStudentDate(studentId: string, participationDate: string) {
     return this.listByStudent(studentId).filter((row) =>
       row.participationDate === participationDate && row.completed && row.stampGranted,
