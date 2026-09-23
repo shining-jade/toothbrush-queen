@@ -71,6 +71,15 @@ export const AdminDashboardInputSchema = z.object({
   challengeId: ChallengeIdSchema,
 }).strict();
 
+export const AdminStudentDeleteInputSchema = z.object({
+  challengeId: ChallengeIdSchema,
+  studentId: z.string().min(1).max(64),
+}).strict();
+
+export const AdminStudentDeleteResultSchema = AdminStudentDeleteInputSchema.extend({
+  deleted: z.literal(true),
+}).strict();
+
 export const AdminChallengeSaveInputSchema = z.object({
   challengeId: ChallengeIdSchema,
   name: z.string().trim().min(1).max(80),
@@ -238,6 +247,8 @@ export type AdminAssetUploadResult = z.infer<typeof AdminAssetUploadResultSchema
 export type AdminSkinDraft = z.infer<typeof AdminSkinDraftSchema>;
 export type AdminSkin = z.infer<typeof AdminSkinSchema>;
 export type AdminDashboardInput = z.infer<typeof AdminDashboardInputSchema>;
+export type AdminStudentDeleteInput = z.infer<typeof AdminStudentDeleteInputSchema>;
+export type AdminStudentDeleteResult = z.infer<typeof AdminStudentDeleteResultSchema>;
 export type AdminChallengeSaveInput = z.infer<typeof AdminChallengeSaveInputSchema>;
 export type AdminStudentSummary = z.infer<typeof AdminStudentSummarySchema>;
 export type AdminDashboardResult = z.infer<typeof AdminDashboardResultSchema>;

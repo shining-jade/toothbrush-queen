@@ -2,6 +2,7 @@ import {
   AdminAssetUploadInputSchema,
   AdminChallengeSaveInputSchema,
   AdminDashboardInputSchema,
+  AdminStudentDeleteInputSchema,
   AdminLoginInputSchema,
   AdminSkinDraftSchema,
   AdminSkinEnabledInputSchema,
@@ -23,12 +24,14 @@ import {
   type AdminDashboardResult,
   type AdminLoginResult,
   type AdminSkin,
+  type AdminStudentDeleteResult,
 } from "../../src/shared/contracts";
 import { z } from "zod";
 import { AdminAuthService } from "./domain/admin-auth-service";
 import { AdminChallengeService } from "./domain/admin-challenge-service";
 import { AdminDashboardService } from "./domain/admin-dashboard-service";
 import { AdminSkinService } from "./domain/admin-skin-service";
+import { AdminStudentService } from "./domain/admin-student-service";
 import { ProgressService } from "./domain/progress-service";
 import { StudentSessionService } from "./domain/student-session-service";
 import { AppsScriptAttemptCrypto, AttemptTokenService } from "./domain/attempt-token";
@@ -60,6 +63,7 @@ export type RouterServices = {
   setAdminSkinEnabled(token: string, skinId: string, enabled: boolean): AdminSkin;
   getAdminDashboard(token: string, challengeId: string): AdminDashboardResult;
   saveAdminChallenge(token: string, input: AdminChallengeSaveInput): Challenge;
+  deleteAdminStudent(token: string, challengeId: string, studentId: string): AdminStudentDeleteResult;
 };
 
 const errorMessages: Record<string, string> = {
@@ -76,6 +80,7 @@ const errorMessages: Record<string, string> = {
   INVALID_IMAGE_EXTENSION: "PNG 또는 WebP 파일을 선택해 주세요.",
   INVALID_IMAGE_SIZE: "이미지는 2MB 이하여야 합니다.",
   INVALID_IMAGE_SIGNATURE: "올바른 이미지 파일이 아닙니다.",
+  STUDENT_NOT_FOUND: "삭제할 학생을 찾을 수 없습니다.",
 };
 
 const EmptyObjectSchema = z.object({}).strict();
@@ -164,6 +169,12 @@ export function createRouter(services: RouterServices) {
           AdminChallengeSaveInputSchema.parse(request.payload),
         ) };
       }
+      if (request.action === "admin.student.delete") {
+        const input = AdminStudentDeleteInputSchema.parse(request.payload);
+        return { ok: true, data: services.deleteAdminStudent(
+          request.auth?.adminToken ?? "", input.challengeId, input.studentId,
+        ) };
+      }
       return failure("ACTION_NOT_FOUND");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -216,6 +227,9 @@ export function createProductionRouter() {
     (date, timeZone) => Utilities.formatDate(date, timeZone, "yyyy-MM-dd"),
   );
   const adminChallenges = new AdminChallengeService(adminAuth, challenges, now);
+  const adminStudents = new AdminStudentService(
+    adminAuth, students, completions, sessions, new AppsScriptExclusiveLock(),
+  );
   const attemptTokens = new AttemptTokenService(
     new AppsScriptAttemptCrypto(secret), () => now().getTime(),
     () => `attempt-${security.randomToken().slice(0, 24)}`,
@@ -271,5 +285,6 @@ export function createProductionRouter() {
     setAdminSkinEnabled: (token, skinId, enabled) => adminSkins.setEnabled(token, skinId, enabled),
     getAdminDashboard: (token, challengeId) => adminDashboard.get(token, challengeId),
     saveAdminChallenge: (token, input) => adminChallenges.save(token, input),
+    deleteAdminStudent: (token, challengeId, studentId) => adminStudents.delete(token, challengeId, studentId),
   });
 }

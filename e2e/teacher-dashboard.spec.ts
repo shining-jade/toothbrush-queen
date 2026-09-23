@@ -24,3 +24,20 @@ test("teacher logs in, filters participation, saves settings, and gets a student
   await expect(page.getByLabel("목표 일수")).toHaveValue("30");
   await expect(page.getByRole("link", { name: "AR 스킨 관리" })).toBeVisible();
 });
+
+test("teacher permanently deletes a student after confirming", async ({ page }) => {
+  await mockAppsScript(page, { adminPassword: "test-admin-password" });
+  await page.goto("/admin");
+  await page.getByLabel("관리자 비밀번호").fill("test-admin-password");
+  await page.getByRole("button", { name: "로그인" }).click();
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain("도장 기록, 소감, 자동로그인 정보");
+    await dialog.accept();
+  });
+  await page.getByRole("button", { name: "김민지 학생 삭제" }).click();
+
+  await expect(page.getByRole("status")).toHaveText("김민지 학생과 모든 기록을 삭제했어요.");
+  await expect(page.getByRole("article", { name: "전체 학생" })).toContainText("2명");
+  await expect(page.getByRole("button", { name: "김민지 학생 삭제" })).toBeHidden();
+});

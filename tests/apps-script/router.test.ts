@@ -53,6 +53,11 @@ describe("Apps Script router", () => {
       ...challenge,
       ...input,
     }),
+    deleteAdminStudent: (_token, challengeId, studentId) => ({
+      deleted: true as const,
+      challengeId,
+      studentId,
+    }),
   };
   const router = createRouter(services);
 
@@ -130,5 +135,16 @@ describe("Apps Script router", () => {
         endDate: "2026-10-14", targetDays: 10, durationMode: "choice",
       },
     })).toMatchObject({ ok: true, data: { name: "10일 양치왕", targetDays: 10 } });
+  });
+
+  it("routes an authenticated permanent student deletion", () => {
+    expect(router({
+      action: "admin.student.delete",
+      auth: { adminToken: "a".repeat(32) },
+      payload: { challengeId: "ABC123", studentId: "stu-1" },
+    })).toEqual({
+      ok: true,
+      data: { deleted: true, challengeId: "ABC123", studentId: "stu-1" },
+    });
   });
 });

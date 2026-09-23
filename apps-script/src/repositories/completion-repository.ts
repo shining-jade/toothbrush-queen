@@ -67,4 +67,8 @@ export class CompletionRepository {
       row.participationDate === participationDate && row.completed && row.stampGranted,
     );
   }
+
+  deleteByStudent(studentId: string) {
+    return this.gateway.deleteWhere("Completions", (row) => String(row[3]) === studentId);
+  }
 }

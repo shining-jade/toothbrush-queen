@@ -16,7 +16,13 @@ const STATUS_LABELS: Record<AdminStudentSummary["participationStatus"], string> 
 const sortedUnique = (values: string[]) => [...new Set(values)]
   .sort((left, right) => left.localeCompare(right, "ko-KR", { numeric: true }));
 
-export function StudentParticipationTable({ students }: { students: AdminStudentSummary[] }) {
+type StudentParticipationTableProps = {
+  students: AdminStudentSummary[];
+  deletingStudentId?: string;
+  onDelete?: (student: AdminStudentSummary) => void;
+};
+
+export function StudentParticipationTable({ students, deletingStudentId, onDelete }: StudentParticipationTableProps) {
   const [grade, setGrade] = useState("");
   const [classNo, setClassNo] = useState("");
   const [status, setStatus] = useState("");
@@ -65,7 +71,7 @@ export function StudentParticipationTable({ students }: { students: AdminStudent
       </div>
       <div className={styles.tableWrap}>
         <table>
-          <thead><tr><th>학생</th><th>도장</th><th>상태</th><th>최근 참여일</th></tr></thead>
+          <thead><tr><th>학생</th><th>도장</th><th>상태</th><th>최근 참여일</th>{onDelete && <th>관리</th>}</tr></thead>
           <tbody>
             {visible.map((student) => (
               <tr key={student.studentId}>
@@ -73,6 +79,19 @@ export function StudentParticipationTable({ students }: { students: AdminStudent
                 <td>{student.acceptedDays} / {student.targetDays}일</td>
                 <td><span className={`${styles.statusBadge} ${styles[student.participationStatus]}`}>{STATUS_LABELS[student.participationStatus]}</span></td>
                 <td>{student.lastParticipationDate ?? "-"}</td>
+                {onDelete && (
+                  <td>
+                    <button
+                      className={styles.deleteButton}
+                      type="button"
+                      disabled={Boolean(deletingStudentId)}
+                      aria-label={`${student.name} 학생 삭제`}
+                      onClick={() => onDelete(student)}
+                    >
+                      {deletingStudentId === student.studentId ? "삭제 중…" : "삭제"}
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

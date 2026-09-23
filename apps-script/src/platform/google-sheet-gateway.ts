@@ -39,4 +39,17 @@ export class GoogleSheetGateway implements SheetGateway {
     }
     this.sheet(tab).getRange(rowIndex, 1, 1, row.length).setValues([row]);
   }
+
+  deleteWhere(tab: SheetTab, predicate: (row: unknown[]) => boolean) {
+    const sheet = this.sheet(tab);
+    const rowCount = sheet.getLastRow() - 1;
+    if (rowCount <= 0) return 0;
+    const rows = sheet.getRange(2, 1, rowCount, SHEET_SCHEMAS[tab].length).getValues();
+    const sheetRows = rows
+      .map((row, index) => predicate(row) ? index + 2 : null)
+      .filter((row): row is number => row !== null)
+      .reverse();
+    sheetRows.forEach((row) => sheet.deleteRow(row));
+    return sheetRows.length;
+  }
 }

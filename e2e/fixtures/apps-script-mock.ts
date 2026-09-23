@@ -29,6 +29,11 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
   let hasStudent = false;
   let adminUploadRequests = 0;
   let nextAssetId = 1;
+  let adminStudents = [
+    { studentId: "student-1", grade: "2", classNo: "3", studentNo: "12", name: "김민지", acceptedDays: 5, targetDays: challenge.targetDays, completedToday: true, lastParticipationDate: "2026-09-23", participationStatus: "completed" },
+    { studentId: "student-2", grade: "2", classNo: "4", studentNo: "7", name: "이서준", acceptedDays: 2, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: "2026-09-22", participationStatus: "missingToday" },
+    { studentId: "student-3", grade: "3", classNo: "1", studentNo: "2", name: "박지우", acceptedDays: 0, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: null, participationStatus: "noRecord" },
+  ];
   const adminSkins: Array<{
     skinId: string; assetId: string; name: string; imageUrl: string;
     anchorX: number; anchorY: number; scale: number; rotationOffset: number;
@@ -80,12 +85,23 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
       if (!body.auth?.adminToken) return failure(route, "ADMIN_SESSION_EXPIRED", "관리자 로그인이 필요합니다.");
       return success(route, {
         challenge: { ...challenge, challengeId: String(body.payload?.challengeId ?? challenge.challengeId) },
-        summary: { totalStudents: 3, completedToday: 1, missingToday: 2, completedChallenge: 1 },
-        students: [
-          { studentId: "student-1", grade: "2", classNo: "3", studentNo: "12", name: "김민지", acceptedDays: 5, targetDays: challenge.targetDays, completedToday: true, lastParticipationDate: "2026-09-23", participationStatus: "completed" },
-          { studentId: "student-2", grade: "2", classNo: "4", studentNo: "7", name: "이서준", acceptedDays: 2, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: "2026-09-22", participationStatus: "missingToday" },
-          { studentId: "student-3", grade: "3", classNo: "1", studentNo: "2", name: "박지우", acceptedDays: 0, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: null, participationStatus: "noRecord" },
-        ],
+        summary: {
+          totalStudents: adminStudents.length,
+          completedToday: adminStudents.filter((student) => student.completedToday).length,
+          missingToday: adminStudents.filter((student) => !student.completedToday).length,
+          completedChallenge: adminStudents.filter((student) => student.acceptedDays >= challenge.targetDays).length,
+        },
+        students: adminStudents,
+      });
+    }
+    if (body.action === "admin.student.delete") {
+      if (!body.auth?.adminToken) return failure(route, "ADMIN_SESSION_EXPIRED", "관리자 로그인이 필요합니다.");
+      const studentId = String(body.payload?.studentId ?? "");
+      adminStudents = adminStudents.filter((student) => student.studentId !== studentId);
+      return success(route, {
+        deleted: true,
+        challengeId: String(body.payload?.challengeId ?? challenge.challengeId),
+        studentId,
       });
     }
     if (body.action === "admin.challenge.save") {

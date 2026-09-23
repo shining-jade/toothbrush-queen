@@ -17,6 +17,7 @@ function services(): TeacherDashboardServices {
     getToken: vi.fn(() => "a".repeat(32)),
     loadDashboard: vi.fn().mockResolvedValue(dashboard),
     saveChallenge: vi.fn().mockImplementation(async (_token, input) => ({ ...dashboard.challenge, ...input })),
+    deleteStudent: vi.fn().mockResolvedValue({ deleted: true, challengeId: "BRUSH5", studentId: "stu-1" }),
     navigate: vi.fn(),
   };
 }
@@ -61,5 +62,28 @@ describe("TeacherDashboard", () => {
 
     await vi.waitFor(() => expect(activeServices.navigate).toHaveBeenCalledWith("/admin?returnTo=/admin/dashboard"));
     expect(activeServices.loadDashboard).not.toHaveBeenCalled();
+  });
+
+  it("confirms permanent deletion and refreshes the student list", async () => {
+    const activeServices = services();
+    vi.mocked(activeServices.loadDashboard)
+      .mockResolvedValueOnce(dashboard)
+      .mockResolvedValueOnce({
+        ...dashboard,
+        summary: { totalStudents: 0, completedToday: 0, missingToday: 0, completedChallenge: 0 },
+        students: [],
+      });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "김민지 학생 삭제" }));
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("도장 기록, 소감, 자동로그인 정보"));
+    await vi.waitFor(() => expect(activeServices.deleteStudent).toHaveBeenCalledWith(
+      "a".repeat(32), "BRUSH5", "stu-1",
+    ));
+    expect(await screen.findByText("김민지 학생과 모든 기록을 삭제했어요.")).toBeVisible();
+    expect(screen.queryByText("김민지")).not.toBeInTheDocument();
+    confirm.mockRestore();
   });
 });
