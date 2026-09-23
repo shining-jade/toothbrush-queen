@@ -1,0 +1,70 @@
+:root {
+  color-scheme: light;
+  --background: #f3f6ff;
+  --surface: #ffffff;
+  --foreground: #213058;
+  --muted: #6f7a91;
+  --primary: #5875d8;
+  --focus: #183fb8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  min-height: 44px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.app-shell {
+  width: min(100%, 480px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(24px + env(safe-area-inset-top)) 20px
+    calc(24px + env(safe-area-inset-bottom));
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.loading-panel {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--muted);
+  box-shadow: 0 12px 30px rgb(33 48 88 / 8%);
+}
