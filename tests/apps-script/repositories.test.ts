@@ -116,6 +116,32 @@ describe("Sheets repositories", () => {
     );
   });
 
+  it("normalizes Google Sheets completion date cells to YYYY-MM-DD", () => {
+    const memory = new InMemorySheetGateway();
+    const completions = new CompletionRepository(memory);
+    memory.append("Completions", [
+      "cmp-date",
+      "key-date",
+      "BRUSH5",
+      "stu-1",
+      new Date(2026, 8, 23),
+      "attempt-date",
+      1,
+      60,
+      60,
+      "",
+      "timer-only",
+      true,
+      true,
+      "",
+      "2026-09-23T00:01:00.000Z",
+    ]);
+
+    expect(completions.listByChallenge("BRUSH5")[0]?.participationDate).toBe(
+      "2026-09-23",
+    );
+  });
+
   it("round-trips challenges and device sessions", () => {
     const memory = new InMemorySheetGateway();
     const challenges = new ChallengeRepository(memory);
