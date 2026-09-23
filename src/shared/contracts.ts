@@ -46,6 +46,7 @@ export const AdminAssetUploadResultSchema = z.object({
   publicUrl: z.string().url(),
 }).strict();
 export const AdminSkinDraftSchema = z.object({
+  skinId: PublicSkinSchema.shape.skinId.optional(),
   assetId: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(40),
   anchorX: z.number().min(-1).max(1),

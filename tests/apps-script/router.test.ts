@@ -25,6 +25,25 @@ describe("Apps Script router", () => {
       completionId: "completion-1", challengeId: "ABC123", participationDate: "2026-09-23",
       acceptedDays: 1, targetDays: 5, newlyAccepted: true,
     }),
+    adminLogin: () => ({ adminToken: "a".repeat(32), expiresAtMs: 99_999 }),
+    getAdminSession: () => ({ valid: true as const, expiresAtMs: 99_999 }),
+    uploadAdminAsset: () => ({ assetId: "asset-1", publicUrl: "https://example.com/skin.png" }),
+    saveAdminSkin: () => ({
+      skinId: "skin-flower-1", assetId: "asset-1", name: "flower",
+      imageUrl: "https://example.com/skin.png", anchorX: 0, anchorY: 0,
+      scale: 1, rotationOffset: 0, version: 1, sortOrder: 1,
+      enabled: true, updatedAt: "2026-09-23T00:00:00.000Z",
+    }),
+    listAdminSkins: (token) => {
+      if (!token) throw new Error("ADMIN_SESSION_EXPIRED");
+      return [];
+    },
+    setAdminSkinEnabled: () => ({
+      skinId: "skin-flower-1", assetId: "asset-1", name: "flower",
+      imageUrl: "https://example.com/skin.png", anchorX: 0, anchorY: 0,
+      scale: 1, rotationOffset: 0, version: 1, sortOrder: 1,
+      enabled: false, updatedAt: "2026-09-23T00:00:00.000Z",
+    }),
   });
 
   it("returns only public challenge fields", () => {
@@ -67,5 +86,14 @@ describe("Apps Script router", () => {
         faceDetectedSec: null, cameraMode: "timer-only",
       },
     })).toMatchObject({ ok: true, data: { completionId: "completion-1" } });
+  });
+
+  it("routes administrator login and rejects a missing admin session", () => {
+    expect(router({ action: "admin.login", payload: { password: "valid-password" } }))
+      .toMatchObject({ ok: true, data: { adminToken: "a".repeat(32) } });
+    expect(router({ action: "admin.skin.list", auth: {}, payload: {} })).toEqual({
+      ok: false,
+      error: { code: "ADMIN_SESSION_EXPIRED", message: "관리자 로그인이 필요합니다." },
+    });
   });
 });

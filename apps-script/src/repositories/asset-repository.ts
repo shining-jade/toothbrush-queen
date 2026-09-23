@@ -35,4 +35,12 @@ export class AssetRepository {
     const row = this.gateway.readAll("Assets").find((candidate) => String(candidate[0]) === assetId);
     return row ? fromRow(row) : null;
   }
+
+  update(value: AssetRow) {
+    const rows = this.gateway.readAll("Assets");
+    const index = rows.findIndex((row) => String(row[0]) === value.assetId);
+    if (index < 0) throw new Error("ASSET_NOT_FOUND");
+    this.gateway.update("Assets", index + 2, toRow(value));
+    return value;
+  }
 }

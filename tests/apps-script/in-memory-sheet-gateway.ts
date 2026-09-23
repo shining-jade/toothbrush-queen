@@ -2,12 +2,22 @@ import type { SheetGateway, SheetTab } from "../../apps-script/src/platform/shee
 
 export class InMemorySheetGateway implements SheetGateway {
   private readonly tables = new Map<SheetTab, unknown[][]>();
+  private readonly appendFailures = new Map<SheetTab, Error>();
+
+  failNextAppend(tab: SheetTab, error: Error) {
+    this.appendFailures.set(tab, error);
+  }
 
   readAll(tab: SheetTab) {
     return (this.tables.get(tab) ?? []).map((row) => [...row]);
   }
 
   append(tab: SheetTab, row: unknown[]) {
+    const failure = this.appendFailures.get(tab);
+    if (failure) {
+      this.appendFailures.delete(tab);
+      throw failure;
+    }
     const rows = this.tables.get(tab) ?? [];
     rows.push([...row]);
     this.tables.set(tab, rows);
