@@ -38,7 +38,7 @@ export type RunningSession = StartAttemptResult & {
   stream: MediaStream | null;
   startedAtMs: number;
   elapsedSec: number;
-  remainingSec: number;
+  remainingSec: number | null;
   hiddenSec: number;
 };
 
@@ -46,8 +46,7 @@ export type BrushingSessionState =
   | { status: "choosing" }
   | { status: "explaining"; durationSec: BrushingDuration }
   | { status: "requestingCamera"; durationSec: BrushingDuration }
-  | ({ status: "running" } & RunningSession)
-  | ({ status: "readyToSubmit" } & RunningSession)
+  | ({ status: "running" | "readyToSubmit" } & RunningSession)
   | { status: "error"; message: string };
 
 export function useBrushingSession(
@@ -115,7 +114,7 @@ export function useBrushingSession(
       const currentNow = now();
       const liveHiddenMs = hiddenMs + (hiddenStartedAt === null ? 0 : currentNow - hiddenStartedAt);
       const snapshot = createBrushingMachine({
-        durationSec: timerDurationSec,
+        mode: timerDurationSec,
         startedAtMs: timerStartedAtMs,
         hiddenMs: liveHiddenMs,
       }).at(currentNow);

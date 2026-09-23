@@ -9,6 +9,7 @@ export default defineConfig([
     ".next/**",
     "coverage/**",
     "apps-script/dist/**",
+    "public/mediapipe/wasm/**",
     "playwright-report/**",
     "test-results/**",
   ]),

@@ -9,7 +9,7 @@ export type ArSkin = {
   yOffset: number;
 };
 
-export const AR_SKINS: Record<ArSkinId, ArSkin> = {
+export const AR_SKINS = {
   cat: {
     id: "cat",
     label: "냥냥 볼터치",
@@ -38,7 +38,7 @@ export const AR_SKINS: Record<ArSkinId, ArSkin> = {
     widthScale: 1.28,
     yOffset: -0.5,
   },
-};
+} as const satisfies Record<ArSkinId, ArSkin>;
 
 export const BASIC_SKINS = [AR_SKINS.cat, AR_SKINS.rabbit, AR_SKINS.bear] as const;
 
