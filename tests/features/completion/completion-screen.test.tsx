@@ -23,6 +23,7 @@ const result = {
   acceptedDays: 3,
   targetDays: 5,
   newlyAccepted: true,
+  reflectionRequired: false,
 };
 
 describe("CompletionScreen", () => {
@@ -36,6 +37,7 @@ describe("CompletionScreen", () => {
       retryPending: vi.fn(),
       loadPending: vi.fn(() => null),
       getDeviceToken: vi.fn(() => "device-token"),
+      submitReflection: vi.fn(),
     };
     render(<CompletionScreen input={input} services={services} />);
 
@@ -56,6 +58,7 @@ describe("CompletionScreen", () => {
       retryPending: vi.fn(),
       loadPending: vi.fn(() => null),
       getDeviceToken: vi.fn(() => "device-token"),
+      submitReflection: vi.fn(),
     };
     render(<CompletionScreen input={input} services={services} />);
     await act(async () => {
@@ -72,6 +75,7 @@ describe("CompletionScreen", () => {
       retryPending: vi.fn(),
       loadPending: vi.fn(() => null),
       getDeviceToken: vi.fn(() => "device-token"),
+      submitReflection: vi.fn(),
     };
     render(<CompletionScreen input={input} services={services} />);
     await act(async () => {
@@ -91,5 +95,34 @@ describe("CompletionScreen", () => {
       "href",
       "/?challenge=ABC123",
     );
+  });
+
+  it("requires and submits one reflection after the final stamp before showing the home link", async () => {
+    const finalResult = { ...result, acceptedDays: 5, reflectionRequired: true };
+    const services: CompletionScreenServices = {
+      submitOrQueue: vi.fn().mockResolvedValue({ status: "submitted", result: finalResult }),
+      retryPending: vi.fn(),
+      loadPending: vi.fn(() => null),
+      getDeviceToken: vi.fn(() => "device-token"),
+      submitReflection: vi.fn().mockResolvedValue({ submitted: true, challengeId: "ABC123" }),
+    };
+    render(<CompletionScreen input={input} services={services} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "챌린지 완료하고 제출하기" }));
+    });
+
+    expect(screen.getByRole("heading", { name: "완주 소감을 남겨주세요" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "홈으로 돌아가기" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("완주 소감"), { target: { value: "매일 양치하는 습관이 생겼어요." } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "소감 제출하기" }));
+    });
+
+    expect(services.submitReflection).toHaveBeenCalledWith(
+      { challengeId: "ABC123", reflection: "매일 양치하는 습관이 생겼어요." },
+      "device-token",
+    );
+    expect(screen.getByText("소감을 한 번만 안전하게 저장했어요.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toBeVisible();
   });
 });

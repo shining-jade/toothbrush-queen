@@ -71,12 +71,12 @@ export function StudentParticipationTable({ students, deletingStudentId, onDelet
       </div>
       <div className={styles.tableWrap}>
         <table>
-          <thead><tr><th>학생</th><th>도장</th><th>상태</th><th>최근 참여일</th>{onDelete && <th>관리</th>}</tr></thead>
+          <thead><tr><th>학생</th><th>스탬프 횟수</th><th>상태</th><th>최근 참여일</th>{onDelete && <th>관리</th>}</tr></thead>
           <tbody>
             {visible.map((student) => (
               <tr key={student.studentId}>
                 <td><strong>{student.name}</strong><span>{student.grade}학년 {student.classNo}반 {student.studentNo}번</span></td>
-                <td>{student.acceptedDays} / {student.targetDays}일</td>
+                <td>스탬프 {student.acceptedDays} / {student.targetDays}개</td>
                 <td><span className={`${styles.statusBadge} ${styles[student.participationStatus]}`}>{STATUS_LABELS[student.participationStatus]}</span></td>
                 <td>{student.lastParticipationDate ?? "-"}</td>
                 {onDelete && (

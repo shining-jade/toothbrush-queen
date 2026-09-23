@@ -22,3 +22,17 @@
   color: var(--primary);
   font-size: 2rem;
 }
+
+:global(.reflection-form) {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #dbe2f5;
+  border-radius: 18px;
+  background: #f7f9ff;
+  text-align: left;
+}
+
+:global(.reflection-form h2) { margin: 0; font-size: 1.25rem; }
+:global(.reflection-form label) { display: grid; gap: 8px; font-weight: 800; }
+:global(.reflection-form textarea) { width: 100%; resize: vertical; padding: 12px; border: 1px solid #bcc6dc; border-radius: 12px; background: white; color: var(--foreground); }

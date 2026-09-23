@@ -10,12 +10,14 @@ import {
   ChallengeIdSchema,
   StartAttemptInputSchema,
   SubmitCompletionInputSchema,
+  SubmitReflectionInputSchema,
   JoinStudentInputSchema,
   SessionResumeInputSchema,
   type ApiResponse,
   type Challenge,
   type JoinStudentResult,
   type CompletionResult,
+  type ReflectionResult,
   type ResumeStudentResult,
   type StartAttemptResult,
   type StudentProgress,
@@ -55,6 +57,7 @@ export type RouterServices = {
   getProgress(token: string, challengeId: string): StudentProgress;
   startBrushing(token: string, input: Parameters<CompletionService["start"]>[0]): StartAttemptResult;
   submitCompletion(token: string, input: Parameters<CompletionService["submit"]>[0]): CompletionResult;
+  submitReflection(token: string, input: Parameters<CompletionService["submitReflection"]>[0]): ReflectionResult;
   adminLogin(password: string): AdminLoginResult;
   getAdminSession(token: string): { valid: true; expiresAtMs: number };
   uploadAdminAsset(token: string, input: Parameters<AdminSkinService["uploadAsset"]>[1]): AdminAssetUploadResult;
@@ -81,6 +84,8 @@ const errorMessages: Record<string, string> = {
   INVALID_IMAGE_SIZE: "이미지는 2MB 이하여야 합니다.",
   INVALID_IMAGE_SIGNATURE: "올바른 이미지 파일이 아닙니다.",
   STUDENT_NOT_FOUND: "삭제할 학생을 찾을 수 없습니다.",
+  REFLECTION_NOT_AVAILABLE: "챌린지를 완주한 뒤 소감을 작성할 수 있습니다.",
+  REFLECTION_ALREADY_SUBMITTED: "완주 소감은 한 번만 작성할 수 있습니다.",
 };
 
 const EmptyObjectSchema = z.object({}).strict();
@@ -126,6 +131,15 @@ export function createRouter(services: RouterServices) {
           data: services.submitCompletion(
             request.auth?.deviceToken ?? "",
             SubmitCompletionInputSchema.parse(request.payload),
+          ),
+        };
+      }
+      if (request.action === "completion.reflection.submit") {
+        return {
+          ok: true,
+          data: services.submitReflection(
+            request.auth?.deviceToken ?? "",
+            SubmitReflectionInputSchema.parse(request.payload),
           ),
         };
       }
@@ -273,6 +287,9 @@ export function createProductionRouter() {
     },
     submitCompletion(token, input) {
       return completionService.submit(input, authenticatedStudentId(token, input.challengeId));
+    },
+    submitReflection(token, input) {
+      return completionService.submitReflection(input, authenticatedStudentId(token, input.challengeId));
     },
     adminLogin: (password) => adminAuth.login(password),
     getAdminSession(token) {

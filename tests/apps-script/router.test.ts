@@ -23,8 +23,9 @@ describe("Apps Script router", () => {
     }),
     submitCompletion: () => ({
       completionId: "completion-1", challengeId: "ABC123", participationDate: "2026-09-23",
-      acceptedDays: 1, targetDays: 5, newlyAccepted: true,
+      acceptedDays: 1, targetDays: 5, newlyAccepted: true, reflectionRequired: false,
     }),
+    submitReflection: (_token, input) => ({ submitted: true as const, challengeId: input.challengeId }),
     adminLogin: () => ({ adminToken: "a".repeat(32), expiresAtMs: 99_999 }),
     getAdminSession: () => ({ valid: true as const, expiresAtMs: 99_999 }),
     uploadAdminAsset: () => ({ assetId: "asset-1", publicUrl: "https://example.com/skin.png" }),
@@ -107,6 +108,14 @@ describe("Apps Script router", () => {
         faceDetectedSec: null, cameraMode: "timer-only",
       },
     })).toMatchObject({ ok: true, data: { completionId: "completion-1" } });
+  });
+
+  it("routes an authenticated final reflection submission", () => {
+    expect(router({
+      action: "completion.reflection.submit",
+      auth: { deviceToken: "secret-device-token-value" },
+      payload: { challengeId: "ABC123", reflection: "양치 습관이 생겼어요." },
+    })).toEqual({ ok: true, data: { submitted: true, challengeId: "ABC123" } });
   });
 
   it("routes administrator login and rejects a missing admin session", () => {

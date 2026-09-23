@@ -179,7 +179,11 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
         acceptedDays,
         targetDays: 5,
         newlyAccepted: completionRequests === 1,
+        reflectionRequired: acceptedDays >= 5,
       });
+    }
+    if (body.action === "completion.reflection.submit") {
+      return success(route, { submitted: true, challengeId: String(body.payload?.challengeId ?? "ABC123") });
     }
     if (body.action === "progress.get") return success(route, progress());
 
