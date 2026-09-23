@@ -1,17 +1,24 @@
 import {
   ApiRequestSchema,
   ChallengeIdSchema,
+  StartAttemptInputSchema,
+  SubmitCompletionInputSchema,
   JoinStudentInputSchema,
   SessionResumeInputSchema,
   type ApiResponse,
   type Challenge,
   type JoinStudentResult,
+  type CompletionResult,
   type ResumeStudentResult,
+  type StartAttemptResult,
   type StudentProgress,
 } from "../../src/shared/contracts";
 import { ProgressService } from "./domain/progress-service";
 import { StudentSessionService } from "./domain/student-session-service";
+import { AppsScriptAttemptCrypto, AttemptTokenService } from "./domain/attempt-token";
+import { CompletionService } from "./domain/completion-service";
 import { GoogleSheetGateway } from "./platform/google-sheet-gateway";
+import { AppsScriptExclusiveLock } from "./platform/lock";
 import { AppsScriptSecurityProvider } from "./platform/security";
 import { ChallengeRepository } from "./repositories/challenge-repository";
 import { CompletionRepository } from "./repositories/completion-repository";
@@ -23,6 +30,8 @@ export type RouterServices = {
   joinStudent(input: Parameters<StudentSessionService["join"]>[0]): JoinStudentResult;
   resumeStudent(token: string, challengeId: string): ResumeStudentResult;
   getProgress(token: string, challengeId: string): StudentProgress;
+  startBrushing(token: string, input: Parameters<CompletionService["start"]>[0]): StartAttemptResult;
+  submitCompletion(token: string, input: Parameters<CompletionService["submit"]>[0]): CompletionResult;
 };
 
 const errorMessages: Record<string, string> = {
@@ -57,6 +66,24 @@ export function createRouter(services: RouterServices) {
         const payload = SessionResumeInputSchema.parse(request.payload);
         return { ok: true, data: services.getProgress(request.auth?.deviceToken ?? "", payload.challengeId) };
       }
+      if (request.action === "brushing.start") {
+        return {
+          ok: true,
+          data: services.startBrushing(
+            request.auth?.deviceToken ?? "",
+            StartAttemptInputSchema.parse(request.payload),
+          ),
+        };
+      }
+      if (request.action === "completion.submit") {
+        return {
+          ok: true,
+          data: services.submitCompletion(
+            request.auth?.deviceToken ?? "",
+            SubmitCompletionInputSchema.parse(request.payload),
+          ),
+        };
+      }
       return failure("ACTION_NOT_FOUND");
     } catch (error) {
       const code = error instanceof Error && error.message === "UNAUTHENTICATED"
@@ -81,6 +108,22 @@ export function createProductionRouter() {
   const studentSessions = new StudentSessionService(
     challenges, students, sessions, progress, new AppsScriptSecurityProvider(), now,
   );
+  const secret = PropertiesService.getScriptProperties().getProperty("ATTEMPT_SIGNING_SECRET") ?? "";
+  const security = new AppsScriptSecurityProvider();
+  const attemptTokens = new AttemptTokenService(
+    new AppsScriptAttemptCrypto(secret), () => now().getTime(),
+    () => `attempt-${security.randomToken().slice(0, 24)}`,
+  );
+  const completionService = new CompletionService(
+    challenges, completions, attemptTokens, new AppsScriptExclusiveLock(), now,
+    (date, timeZone) => Utilities.formatDate(date, timeZone, "yyyy-MM-dd"),
+    () => `cmp-${security.randomToken().slice(0, 24)}`,
+  );
+  const authenticatedStudentId = (token: string, challengeId: string) => {
+    const resumed = studentSessions.resume(token, challengeId);
+    if (resumed.status !== "authenticated") throw new Error("UNAUTHENTICATED");
+    return resumed.progress.studentId;
+  };
   return createRouter({
     getChallenge(challengeId) {
       const challenge = challenges.findById(ChallengeIdSchema.parse(challengeId));
@@ -97,6 +140,12 @@ export function createProductionRouter() {
       const resumed = studentSessions.resume(token, challengeId);
       if (resumed.status !== "authenticated") throw new Error("UNAUTHENTICATED");
       return resumed.progress;
+    },
+    startBrushing(token, input) {
+      return completionService.start(input, authenticatedStudentId(token, input.challengeId));
+    },
+    submitCompletion(token, input) {
+      return completionService.submit(input, authenticatedStudentId(token, input.challengeId));
     },
   });
 }

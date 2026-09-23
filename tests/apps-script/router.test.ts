@@ -17,6 +17,14 @@ describe("Apps Script router", () => {
     } }),
     resumeStudent: () => ({ status: "unauthenticated" }),
     getProgress: () => { throw new Error("UNAUTHENTICATED"); },
+    startBrushing: () => ({
+      attemptId: "attempt-1", attemptToken: "signed-attempt-token-value",
+      durationSec: 60, issuedAtMs: 1_000,
+    }),
+    submitCompletion: () => ({
+      completionId: "completion-1", challengeId: "ABC123", participationDate: "2026-09-23",
+      acceptedDays: 1, targetDays: 5, newlyAccepted: true,
+    }),
   });
 
   it("returns only public challenge fields", () => {
@@ -44,5 +52,20 @@ describe("Apps Script router", () => {
       ok: false,
       error: { code: "ACTION_NOT_FOUND", message: "요청을 처리할 수 없습니다." },
     });
+  });
+
+  it("routes authenticated brushing start and completion", () => {
+    expect(router({
+      action: "brushing.start", auth: { deviceToken: "secret-device-token-value" },
+      payload: { challengeId: "ABC123", selectedDurationSec: 60 },
+    })).toMatchObject({ ok: true, data: { attemptId: "attempt-1" } });
+    expect(router({
+      action: "completion.submit", auth: { deviceToken: "secret-device-token-value" },
+      payload: {
+        challengeId: "ABC123", attemptToken: "signed-attempt-token-value",
+        idempotencyKey: "97ab5a61-26eb-45fd-8fa2-5dc01fb1f5d6", elapsedSec: 60,
+        faceDetectedSec: null, cameraMode: "timer-only",
+      },
+    })).toMatchObject({ ok: true, data: { completionId: "completion-1" } });
   });
 });
