@@ -19,7 +19,9 @@ test("student chooses a skin and free brushing records measured time", async ({ 
   await join(page);
   await page.getByRole("button", { name: "자유 양치" }).click();
   await page.getByRole("radio", { name: "반짝 토끼" }).click();
-  await page.screenshot({ path: "docs/screenshots/ar-animal-selection.png", fullPage: true });
+  if (process.env.CAPTURE_VISUALS === "1") {
+    await page.screenshot({ path: "docs/screenshots/ar-animal-selection.png", fullPage: true });
+  }
   await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
   await expect(page.getByText("00:00")).toBeVisible();
@@ -41,5 +43,7 @@ test("last challenge day forces the crown", async ({ page }) => {
   await expect(crown).toBeVisible();
   await expect.poll(() => crown.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   await expect(page.getByRole("radio")).toHaveCount(0);
-  await page.screenshot({ path: "docs/screenshots/ar-crown-final-day.png", fullPage: true });
+  if (process.env.CAPTURE_VISUALS === "1") {
+    await page.screenshot({ path: "docs/screenshots/ar-crown-final-day.png", fullPage: true });
+  }
 });
