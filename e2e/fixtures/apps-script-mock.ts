@@ -4,9 +4,9 @@ export const APPS_SCRIPT_TEST_URL = "https://script.google.com/macros/s/test/exe
 
 const challenge = {
   challengeId: "ABC123",
-  name: "5일 양치왕 챌린지",
+  name: "양치의 여왕 챌린지",
   startDate: "2026-09-20",
-  endDate: "2026-09-30",
+  endDate: "2026-09-24",
   targetDays: 5,
   timeZone: "Asia/Seoul",
   durationMode: 60,

@@ -6,6 +6,16 @@ import type { AdminChallengeSaveInput, Challenge } from "@/shared/contracts";
 
 import styles from "./teacher-dashboard.module.css";
 
+const TARGET_DAY_PRESETS = [5, 10, 20, 30] as const;
+
+function calculateEndDate(startDate: string, targetDays: number) {
+  const startMs = Date.parse(`${startDate}T00:00:00.000Z`);
+  if (!Number.isFinite(startMs)) return null;
+  return new Date(startMs + (targetDays - 1) * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+}
+
 export function ChallengeSettingsForm({
   challenge,
   saving,
@@ -27,6 +37,13 @@ export function ChallengeSettingsForm({
     event.preventDefault();
     onSave(form);
   }
+  function applyTargetDays(targetDays: number) {
+    setForm((current) => ({
+      ...current,
+      targetDays,
+      endDate: calculateEndDate(current.startDate, targetDays) ?? current.endDate,
+    }));
+  }
 
   return (
     <form className={styles.panel} onSubmit={submit}>
@@ -47,7 +64,11 @@ export function ChallengeSettingsForm({
         <div className={styles.fullField}>
           <span className={styles.fieldLabel}>목표 일수 빠른 선택</span>
           <div className={styles.presetButtons}>
-            {[5, 10].map((days) => <button key={days} type="button" onClick={() => setForm({ ...form, targetDays: days })}>{days}일</button>)}
+            {TARGET_DAY_PRESETS.map((days) => (
+              <button key={days} type="button" onClick={() => applyTargetDays(days)}>
+                {days}일
+              </button>
+            ))}
           </div>
         </div>
         <label>목표 일수
