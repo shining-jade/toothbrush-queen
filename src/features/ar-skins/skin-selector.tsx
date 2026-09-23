@@ -1,29 +1,26 @@
-import Image from "next/image";
+"use client";
 
-import { BASIC_SKINS, type BasicSkinId } from "./skin-registry";
+import Image from "next/image";
+import { useState } from "react";
+
+import type { ArSkin } from "./skin-registry";
 import styles from "./skin-selector.module.css";
 
-export function SkinSelector({
-  value,
-  onChange,
-}: {
-  value: BasicSkinId;
-  onChange: (skin: BasicSkinId) => void;
-}) {
+export function SkinSelector({ skins, value, onChange }: { skins: ArSkin[]; value: string; onChange: (skin: string) => void }) {
+  const [unavailable, setUnavailable] = useState<Set<string>>(() => new Set());
+  function markUnavailable(skinId: string) {
+    setUnavailable((current) => new Set(current).add(skinId));
+    if (value === skinId) onChange("cat");
+  }
   return (
     <div className={styles.grid} role="radiogroup" aria-label="AR 스킨 선택">
-      {BASIC_SKINS.map((skin) => (
-        <button
-          key={skin.id}
-          type="button"
-          className={styles.card}
-          role="radio"
-          aria-checked={value === skin.id}
-          aria-label={skin.label}
-          onClick={() => onChange(skin.id)}
-        >
+      {skins.filter((skin) => !unavailable.has(skin.id)).map((skin) => (
+        <button key={skin.id} type="button" className={styles.card} role="radio" aria-checked={value === skin.id} aria-label={skin.label} onClick={() => onChange(skin.id)}>
           <span className={styles.preview} aria-hidden="true">
-            <Image src={skin.src} alt="" fill sizes="96px" />
+            {skin.bundled ? <Image src={skin.src} alt="" fill sizes="96px" /> : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={skin.src} alt={skin.label} onError={() => markUnavailable(skin.id)} />
+            )}
           </span>
           <span>{skin.label}</span>
         </button>

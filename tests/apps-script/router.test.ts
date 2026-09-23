@@ -9,7 +9,7 @@ describe("Apps Script router", () => {
     durationMode: "choice" as const, dailyLimit: 1, status: "active" as const,
   };
 
-  const router = createRouter({
+  const services = {
     getChallenge: (challengeId) => challengeId === "ABC123" ? challenge : null,
     joinStudent: () => ({ deviceToken: "a".repeat(64), progress: {
       challengeId: "ABC123", studentId: "stu-1", displayName: "2학년 3반 12번 김○○",
@@ -44,13 +44,20 @@ describe("Apps Script router", () => {
       scale: 1, rotationOffset: 0, version: 1, sortOrder: 1,
       enabled: false, updatedAt: "2026-09-23T00:00:00.000Z",
     }),
-  });
+  };
+  const router = createRouter(services);
 
   it("returns only public challenge fields", () => {
     expect(router({ action: "challenge.get", payload: { challengeId: "ABC123" } })).toEqual({
       ok: true,
       data: challenge,
     });
+  });
+
+  it("returns public skin metadata with the challenge", () => {
+    const skin = { skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png", anchorX: 0, anchorY: -0.4, scale: 1.5, rotationOffset: 0, version: 1, sortOrder: 1 };
+    const publicRouter = createRouter({ ...services, getChallenge: () => ({ ...challenge, skins: [skin] }) });
+    expect(publicRouter({ action: "challenge.get", payload: { challengeId: "ABC123" } })).toMatchObject({ ok: true, data: { skins: [skin] } });
   });
 
   it("uses a constant safe error envelope without request data", () => {

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
-import { AR_SKINS, resolveSessionSkin, type BasicSkinId } from "@/features/ar-skins/skin-registry";
+import { AR_SKINS, mergeSkinCatalog, type ArSkin } from "@/features/ar-skins/skin-registry";
 import { SkinSelector } from "@/features/ar-skins/skin-selector";
 import {
   CompletionScreen,
@@ -60,8 +60,8 @@ export function BrushingScreen({
   completionServices?: CompletionScreenServices;
 }) {
   const [completionInput, setCompletionInput] = useState<SubmitCompletionInput | null>(null);
-  const [selectedSkin, setSelectedSkin] = useState<BasicSkinId>("cat");
-  const [sessionSkin, setSessionSkin] = useState<"cat" | "rabbit" | "bear" | "crown">("cat");
+  const [selectedSkin, setSelectedSkin] = useState<string>("cat");
+  const [sessionSkin, setSessionSkin] = useState<ArSkin>(AR_SKINS.cat);
   const [faceDetectedSec, setFaceDetectedSec] = useState<number | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
   const tracker = useMemo(() => activeServices.createFaceTracker(), [activeServices]);
@@ -110,7 +110,8 @@ export function BrushingScreen({
 
   if (state.status === "choosingSkin") {
     const finalDay = state.progress.acceptedDays === state.progress.targetDays - 1;
-    const activeSkin = resolveSessionSkin(selectedSkin, state.progress.acceptedDays, state.progress.targetDays);
+    const catalog = mergeSkinCatalog(state.challenge.skins);
+    const activeSkin = finalDay ? AR_SKINS.crown : catalog.find((skin) => skin.id === selectedSkin) ?? AR_SKINS.cat;
     return (
       <section className="brush-card skin-choice-card">
         <h1>{finalDay ? "양치왕 왕관 스킨" : "오늘의 AR 스킨을 골라요"}</h1>
@@ -119,7 +120,7 @@ export function BrushingScreen({
             <Image src={AR_SKINS.crown.src} alt="양치왕 왕관" width={180} height={180} />
             <p>마지막 도전! 양치왕 왕관이 자동으로 적용돼요.</p>
           </div>
-        ) : <SkinSelector value={selectedSkin} onChange={setSelectedSkin} />}
+        ) : <SkinSelector skins={catalog} value={selectedSkin} onChange={setSelectedSkin} />}
         <button type="button" className="primary-action" onClick={() => {
           setSessionSkin(activeSkin);
           confirmSkin();
@@ -153,7 +154,7 @@ export function BrushingScreen({
       {state.stream ? (
         <ArCameraPreview
           stream={state.stream}
-          skinId={sessionSkin}
+          skin={sessionSkin}
           tracker={tracker}
           elapsedSec={state.elapsedSec}
           onFaceDetectedSecChange={updateFaceDetectedSec}

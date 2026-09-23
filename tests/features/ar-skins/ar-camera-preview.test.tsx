@@ -2,6 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
+import { AR_SKINS, mergeSkinCatalog } from "@/features/ar-skins/skin-registry";
 import type { FaceTrackingResult, FaceTracker } from "@/lib/face-tracking/face-tracker";
 
 function fixture() {
@@ -28,7 +29,7 @@ describe("ArCameraPreview", () => {
     render(
       <ArCameraPreview
         stream={{} as MediaStream}
-        skinId="cat"
+        skin={AR_SKINS.cat}
         tracker={tracker}
         elapsedSec={10}
         onFaceDetectedSecChange={onTime}
@@ -50,7 +51,7 @@ describe("ArCameraPreview", () => {
     const { unmount } = render(
       <ArCameraPreview
         stream={{} as MediaStream}
-        skinId="rabbit"
+        skin={AR_SKINS.rabbit}
         tracker={tracker}
         elapsedSec={2}
         onFaceDetectedSecChange={vi.fn()}
@@ -68,5 +69,18 @@ describe("ArCameraPreview", () => {
     expect(overlay.getAttribute("style")).toContain("rotate(-8deg)");
     unmount();
     expect(tracker.stop).toHaveBeenCalled();
+  });
+
+  it("uses uploaded calibration for a remote skin overlay", async () => {
+    const { tracker, emit } = fixture();
+    const remote = mergeSkinCatalog([{
+      skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png",
+      anchorX: 0.1, anchorY: -0.4, scale: 1.5, rotationOffset: 10, version: 1, sortOrder: 1,
+    }])[3];
+    render(<ArCameraPreview stream={{} as MediaStream} skin={remote} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
+    await act(async () => undefined);
+    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 5 }, nowMs: 100 }));
+    expect(screen.getByTestId("ar-skin-overlay")).toHaveStyle({ left: "52%", top: "22%", width: "30%" });
+    expect(screen.getByTestId("ar-skin-overlay").getAttribute("style")).toContain("rotate(5deg)");
   });
 });

@@ -5,6 +5,7 @@ import { BrushingScreen, type BrushingScreenServices } from "@/features/brushing
 import type { FaceTrackingResult } from "@/lib/face-tracking/face-tracker";
 
 const challenge = { challengeId: "ABC123", name: "5일 양치왕 챌린지", startDate: "2026-09-20", endDate: "2026-09-30", targetDays: 5, timeZone: "Asia/Seoul", durationMode: "choice" as const, dailyLimit: 1, status: "active" as const };
+const remoteSkin = { skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png", anchorX: 0, anchorY: -0.4, scale: 1.5, rotationOffset: 0, version: 1, sortOrder: 1 };
 const progress = { challengeId: "ABC123", studentId: "student-1", displayName: "김학생", acceptedDays: 2, targetDays: 5, completedToday: false };
 
 function services(mode: "camera" | "timer-only" = "timer-only") {
@@ -44,6 +45,14 @@ describe("BrushingScreen", () => {
     expect(testServices.value.camera.start).not.toHaveBeenCalled();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
     expect(testServices.value.camera.start).toHaveBeenCalledOnce();
+  });
+
+  it("offers an active uploaded skin from the challenge", async () => {
+    const testServices = services();
+    vi.mocked(testServices.value.getChallenge).mockResolvedValue({ ...challenge, skins: [remoteSkin] });
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+    fireEvent.click(await screen.findByRole("button", { name: "60초" }));
+    expect(screen.getByRole("radio", { name: "꽃님 사진관" })).toBeVisible();
   });
 
   it("retries failed preflight without opening the camera", async () => {

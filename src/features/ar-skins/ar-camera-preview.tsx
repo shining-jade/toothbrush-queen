@@ -7,18 +7,19 @@ import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
 
 import { FacePresenceClock } from "./face-presence-clock";
 import { mirrorPose, smoothFacePose, type FacePose } from "./face-pose";
-import { AR_SKINS, type ArSkinId } from "./skin-registry";
+import { skinOverlayStyle } from "@/features/admin/skin-upload/skin-calibration";
+import type { ArSkin } from "./skin-registry";
 import styles from "./ar-camera-preview.module.css";
 
 export function ArCameraPreview({
   stream,
-  skinId,
+  skin,
   tracker,
   elapsedSec,
   onFaceDetectedSecChange,
 }: {
   stream: MediaStream;
-  skinId: ArSkinId;
+  skin: ArSkin;
   tracker: FaceTracker;
   elapsedSec: number;
   onFaceDetectedSecChange: (seconds: number | null) => void;
@@ -28,7 +29,6 @@ export function ArCameraPreview({
   const [pose, setPose] = useState<FacePose | null>(null);
   const [detected, setDetected] = useState(true);
   const [failed, setFailed] = useState(false);
-  const skin = AR_SKINS[skinId];
 
   useEffect(() => { elapsedRef.current = elapsedSec; }, [elapsedSec]);
 
@@ -63,13 +63,7 @@ export function ArCameraPreview({
     };
   }, [onFaceDetectedSecChange, tracker]);
 
-  const percent = (value: number) => `${Math.round(value * 10000) / 100}%`;
-  const style = pose ? {
-    left: percent(pose.centerX),
-    top: percent(pose.centerY + pose.width * skin.yOffset),
-    width: percent(pose.width * skin.widthScale),
-    transform: `translate(-50%, -50%) rotate(${pose.rotationDeg}deg)`,
-  } : undefined;
+  const style = pose ? skinOverlayStyle(pose, skin.calibration) : undefined;
 
   return (
     <div className={styles.stage}>

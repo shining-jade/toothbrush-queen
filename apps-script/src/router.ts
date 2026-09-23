@@ -206,10 +206,17 @@ export function createProductionRouter() {
     getChallenge(challengeId) {
       const challenge = challenges.findById(ChallengeIdSchema.parse(challengeId));
       if (!challenge || challenge.status !== "active") return null;
+      let publicSkins = [];
+      try {
+        publicSkins = skins.listEnabledPublic();
+      } catch {
+        publicSkins = [];
+      }
       return {
         challengeId: challenge.challengeId, name: challenge.name, startDate: challenge.startDate,
         endDate: challenge.endDate, targetDays: challenge.targetDays, timeZone: challenge.timeZone,
         durationMode: challenge.durationMode, dailyLimit: challenge.dailyLimit, status: challenge.status,
+        skins: publicSkins,
       };
     },
     joinStudent: (input) => studentSessions.join(input),
