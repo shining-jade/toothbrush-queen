@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 
 import type { CameraStartResult } from "@/lib/camera/camera-controller";
@@ -33,6 +33,7 @@ export type BrushingSessionServices = {
   getChallenge: (challengeId: string) => Promise<Challenge>;
   getProgress: (challengeId: string, deviceToken: string) => Promise<StudentProgress>;
   now?: () => number;
+  loadingHoldMs?: number;
 };
 
 export type RunningSession = StartAttemptResult & {
@@ -47,12 +48,12 @@ export type RunningSession = StartAttemptResult & {
 };
 
 export type BrushingSessionState =
-  | { status: "loadingProgress" }
+  | { status: "loadingProgress"; progress: number }
   | { status: "progressError" }
   | { status: "choosing"; challenge: Challenge; progress: StudentProgress }
   | { status: "choosingSkin"; mode: BrushingMode; challenge: Challenge; progress: StudentProgress }
   | { status: "explaining"; mode: BrushingMode }
-  | { status: "requestingCamera"; mode: BrushingMode }
+  | { status: "requestingCamera"; mode: BrushingMode; progress: number }
   | ({ status: "running" | "readyToSubmit" } & RunningSession)
   | { status: "error"; message: string };
 
@@ -60,8 +61,9 @@ export function useBrushingSession(
   challengeId: string,
   services: BrushingSessionServices,
 ) {
-  const [state, setState] = useState<BrushingSessionState>({ status: "loadingProgress" });
+  const [state, setState] = useState<BrushingSessionState>({ status: "loadingProgress", progress: 10 });
   const [preflightAttempt, setPreflightAttempt] = useState(0);
+  const operationGeneration = useRef(0);
   const now = useCallback(() => services.now?.() ?? performance.now(), [services]);
 
   useEffect(() => {
@@ -69,10 +71,24 @@ export function useBrushingSession(
     void Promise.resolve().then(async () => {
       const deviceToken = services.sessionStore.get(challengeId);
       if (!deviceToken) throw new Error("missing device session");
-      const [challenge, progress] = await Promise.all([
-        services.getChallenge(challengeId),
-        services.getProgress(challengeId, deviceToken),
-      ]);
+      const advance = (progress: number) => setState((current) => current.status === "loadingProgress"
+        ? { ...current, progress: Math.max(current.progress, progress) }
+        : current);
+      const challengeRequest = services.getChallenge(challengeId).then((challenge) => {
+        if (active) advance(45);
+        return challenge;
+      });
+      const progressRequest = services.getProgress(challengeId, deviceToken).then((progress) => {
+        if (active) advance(80);
+        return progress;
+      });
+      const [challenge, progress] = await Promise.all([challengeRequest, progressRequest]);
+      if (!active) return;
+      setState({ status: "loadingProgress", progress: 100 });
+      const loadingHoldMs = services.loadingHoldMs ?? 220;
+      if (loadingHoldMs > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
+      }
       if (active) setState({ status: "choosing", challenge, progress });
     }).catch(() => {
       if (active) setState({ status: "progressError" });
@@ -95,7 +111,11 @@ export function useBrushingSession(
   const start = useCallback(async () => {
     if (state.status !== "explaining") return;
     const mode = state.mode;
-    setState({ status: "requestingCamera", mode });
+    const generation = ++operationGeneration.current;
+    const advance = (progress: number) => setState((current) => current.status === "requestingCamera"
+      ? { ...current, progress: Math.max(current.progress, progress) }
+      : current);
+    setState({ status: "requestingCamera", mode, progress: 10 });
     const deviceToken = services.sessionStore.get(challengeId);
     if (!deviceToken) {
       setState({ status: "error", message: "참여 정보를 다시 확인해 주세요." });
@@ -103,15 +123,27 @@ export function useBrushingSession(
     }
 
     try {
-      const camera = await services.camera.start();
-      const attempt = StartAttemptResultSchema.parse(
-        await services.api.request(
+      const cameraRequest = services.camera.start().then((camera) => {
+        if (operationGeneration.current === generation) advance(55);
+        return camera;
+      });
+      const attemptRequest = services.api.request(
           "brushing.start",
           { challengeId, selectedDurationSec: mode },
           StartAttemptResultSchema,
           { deviceToken },
-        ),
-      );
+        ).then((value) => {
+          if (operationGeneration.current === generation) advance(90);
+          return StartAttemptResultSchema.parse(value);
+        });
+      const [camera, attempt] = await Promise.all([cameraRequest, attemptRequest]);
+      if (operationGeneration.current !== generation) return;
+      setState({ status: "requestingCamera", mode, progress: 100 });
+      const loadingHoldMs = services.loadingHoldMs ?? 220;
+      if (loadingHoldMs > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
+      }
+      if (operationGeneration.current !== generation) return;
       setState({
         status: "running",
         ...attempt,
@@ -181,10 +213,13 @@ export function useBrushingSession(
     };
   }, [now, timerDurationSec, timerHiddenSec, timerStartedAtMs, timerStatus]);
 
-  useEffect(() => () => services.camera.stop(), [services]);
+  useEffect(() => () => {
+    operationGeneration.current += 1;
+    services.camera.stop();
+  }, [services]);
 
   const retryPreflight = useCallback(() => {
-    setState({ status: "loadingProgress" });
+    setState({ status: "loadingProgress", progress: 10 });
     setPreflightAttempt((value) => value + 1);
   }, []);
 

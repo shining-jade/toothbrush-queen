@@ -78,6 +78,44 @@ a {
   font-weight: 700;
 }
 
+.loading-progress {
+  display: grid;
+  width: 100%;
+  gap: 12px;
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.loading-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.loading-progress-heading strong {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.loading-progress-track {
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(88 117 216 / 16%);
+  box-shadow: inset 0 1px 3px rgb(33 48 88 / 12%);
+}
+
+.loading-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6c88eb, #7c5ee8);
+  transition: width 220ms ease-out;
+}
+
 .loading-spinner {
   width: 22px;
   height: 22px;
@@ -94,4 +132,5 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner { animation-duration: 1.8s; }
+  .loading-progress-fill { transition: none; }
 }

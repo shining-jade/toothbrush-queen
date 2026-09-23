@@ -9,6 +9,12 @@ const challenge = { challengeId: "ABC123", name: "5일 양치왕 챌린지", sta
 const remoteSkin = { skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png", anchorX: 0, anchorY: -0.4, scale: 1.5, rotationOffset: 0, version: 1, sortOrder: 1 };
 const progress = { challengeId: "ABC123", studentId: "student-1", displayName: "김학생", acceptedDays: 2, targetDays: 5, completedToday: false };
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => { resolve = next; });
+  return { promise, resolve };
+}
+
 function services(mode: "camera" | "timer-only" = "timer-only") {
   const track = { stop: vi.fn() };
   const stream = { getTracks: () => [track] } as unknown as MediaStream;
@@ -30,6 +36,7 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
       signal: vi.fn(),
       dispose: vi.fn(),
     },
+    loadingHoldMs: 0,
   };
   return { value, tracker, emit: (result: FaceTrackingResult) => emitResult?.(result) };
 }
@@ -48,13 +55,57 @@ async function reachPrivacyNotice(
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe("BrushingScreen", () => {
-  it("shows a spinner while progress is loading", () => {
+  it("shows real preflight progress through 100 percent before duration choices", async () => {
+    vi.useFakeTimers();
     const testServices = services();
-    vi.mocked(testServices.value.getProgress).mockReturnValue(new Promise(() => undefined));
+    testServices.value.loadingHoldMs = 220;
+    const challengeRequest = deferred<typeof challenge>();
+    const progressRequest = deferred<typeof progress>();
+    vi.mocked(testServices.value.getChallenge).mockReturnValue(challengeRequest.promise);
+    vi.mocked(testServices.value.getProgress).mockReturnValue(progressRequest.promise);
 
     render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
 
-    expect(screen.getByRole("status", { name: "진행 상황을 확인하고 있어요." })).toBeVisible();
+    await act(async () => undefined);
+    expect(screen.getByRole("progressbar", { name: "진행 상황을 확인하고 있어요." })).toHaveAttribute("aria-valuenow", "10");
+
+    await act(async () => challengeRequest.resolve(challenge));
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
+
+    await act(async () => progressRequest.resolve(progress));
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByText("100%")).toBeVisible();
+
+    await act(async () => vi.advanceTimersByTime(250));
+    expect(screen.getByRole("button", { name: "60초" })).toBeVisible();
+  });
+
+  it("shows camera and attempt loading stages through 100 percent", async () => {
+    const testServices = services("camera");
+    await reachPrivacyNotice(testServices);
+    const cameraRequest = deferred<{ mode: "camera"; stream: MediaStream }>();
+    const attemptRequest = deferred<{ attemptId: string; attemptToken: string; durationSec: 60; issuedAtMs: number }>();
+    vi.mocked(testServices.value.camera.start).mockReturnValue(cameraRequest.promise);
+    vi.mocked(testServices.value.api.request).mockReturnValue(attemptRequest.promise);
+    testServices.value.loadingHoldMs = 220;
+    vi.useFakeTimers();
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    expect(screen.getByRole("progressbar", { name: "양치 도전을 준비하고 있어요." })).toHaveAttribute("aria-valuenow", "10");
+
+    await act(async () => cameraRequest.resolve({ mode: "camera", stream: {} as MediaStream }));
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "55");
+
+    await act(async () => attemptRequest.resolve({
+      attemptId: "attempt-1",
+      attemptToken: "signed-attempt-token-1234567890",
+      durationSec: 60,
+      issuedAtMs: 1,
+    }));
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+
+    await act(async () => vi.advanceTimersByTime(250));
+    expect(screen.getByLabelText("내 얼굴 카메라 미리보기")).toBeVisible();
   });
 
   it("loads progress before exposing camera permission and offers three skins", async () => {

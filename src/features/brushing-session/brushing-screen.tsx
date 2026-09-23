@@ -98,7 +98,7 @@ export function BrushingScreen({
   }
 
   if (state.status === "loadingProgress") {
-    return <section className="brush-card"><LoadingIndicator label="진행 상황을 확인하고 있어요." /></section>;
+    return <section className="brush-card"><LoadingIndicator label="진행 상황을 확인하고 있어요." progress={state.progress} /></section>;
   }
 
   if (state.status === "progressError") {
@@ -165,7 +165,7 @@ export function BrushingScreen({
   }
 
   if (state.status === "requestingCamera") {
-    return <section className="brush-card"><LoadingIndicator label="양치 도전을 준비하고 있어요." /></section>;
+    return <section className="brush-card"><LoadingIndicator label="양치 도전을 준비하고 있어요." progress={state.progress} /></section>;
   }
 
   if (state.status === "error") {
