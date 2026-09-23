@@ -1,0 +1,74 @@
+.shell {
+  display: grid;
+  align-content: center;
+}
+
+:global(.brush-card),
+:global(.brushing-stage) {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 14px 40px rgb(33 48 88 / 12%);
+}
+
+:global(.duration-grid) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+:global(.duration-grid button) {
+  min-height: 72px;
+  border: 2px solid var(--primary);
+  border-radius: 18px;
+  background: white;
+  color: var(--foreground);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+:global(.brushing-stage) {
+  position: relative;
+  min-height: 72dvh;
+  align-content: end;
+  overflow: hidden;
+  text-align: center;
+}
+
+:global(.camera-preview) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+:global(.timer-only) {
+  align-self: center;
+  color: var(--muted);
+}
+
+:global(.countdown),
+:global(.brushing-stage > p),
+:global(.brushing-stage > button) {
+  position: relative;
+  z-index: 1;
+}
+
+:global(.countdown) {
+  justify-self: end;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 90%);
+}
+
+:global(.countdown strong) {
+  font-size: 2.5rem;
+}
+
+:global(.countdown span) {
+  margin-left: 4px;
+}
