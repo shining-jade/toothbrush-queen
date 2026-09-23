@@ -18,6 +18,10 @@ class FakeSecurity implements SecurityProvider {
   sha256(value: string) {
     return `hash:${value}`;
   }
+
+  safeEqual(left: string, right: string) {
+    return left === right;
+  }
 }
 
 describe("StudentSessionService", () => {
