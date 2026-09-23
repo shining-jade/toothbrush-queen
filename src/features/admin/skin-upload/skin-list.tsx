@@ -19,7 +19,7 @@ export function SkinList({ skins, busyId, onToggle }: {
             <li key={skin.skinId}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={skin.imageUrl} alt="" />
-              <div><strong>{skin.name}</strong><small>{skin.enabled ? "학생에게 공개 중" : "비공개"}</small></div>
+              <div><strong>{skin.name}</strong><small>{skin.enabled ? "활성화됨" : "비공개"}</small></div>
               <button type="button" disabled={busyId === skin.skinId} onClick={() => onToggle(skin)}>
                 {skin.enabled ? "비활성화" : "활성화"}
               </button>

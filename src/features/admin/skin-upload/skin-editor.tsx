@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
@@ -25,6 +25,9 @@ import { SkinPreview } from "./skin-preview";
 import styles from "./skin-upload.module.css";
 
 const DRAFT_KEY = "brush-king:admin-skin-draft";
+const subscribeToHydration = () => () => undefined;
+const clientHydrated = () => true;
+const serverHydrated = () => false;
 const SavedSkinDraftSchema = AdminSkinDraftSchema
   .omit({ assetId: true, enabled: true, skinId: true })
   .extend({ enabled: z.boolean().optional() });
@@ -80,10 +83,20 @@ const sliders = [
   { key: "rotationOffset", label: "회전", min: -180, max: 180, step: 1 },
 ] as const;
 
+function calibrationInput(
+  key: keyof SkinCalibration,
+  value: string,
+  update: Dispatch<SetStateAction<SkinCalibration>>,
+) {
+  const numericValue = Number(value);
+  update((current) => ({ ...current, [key]: numericValue }));
+}
+
 function SkinEditorCore({ services }: { services: SkinEditorServices }) {
   const activeServices = useRef<SkinEditorServices>(services);
   const savingRef = useRef(false);
   const [file, setFile] = useState<File | null>(null);
+  const hydrated = useSyncExternalStore(subscribeToHydration, clientHydrated, serverHydrated);
   const [validated, setValidated] = useState<ValidatedBrowserFile | null>(null);
   const [name, setName] = useState("");
   const [calibration, setCalibration] = useState<SkinCalibration>(DEFAULT_CALIBRATION);
@@ -193,11 +206,11 @@ function SkinEditorCore({ services }: { services: SkinEditorServices }) {
       <header className={styles.header}><div><span>양치왕 관리자</span><h1>AR 스킨 관리</h1></div><p>PNG·WebP / 최대 2MB</p></header>
       <div className={styles.editorGrid}>
         <SkinPreview imageUrl={validated?.previewUrl} calibration={calibration} />
-        <section className={styles.formCard}>
-          <label className={styles.field}><span>스킨 이미지</span><input type="file" accept="image/png,image/webp" onChange={selectFile} /></label>
+        <section className={styles.formCard} aria-label="스킨 설정">
+          <label className={styles.field}><span>스킨 이미지</span><input type="file" accept="image/png,image/webp" disabled={!hydrated} onChange={selectFile} /></label>
           <label className={styles.field}><span>스킨 이름</span><input value={name} maxLength={40} placeholder="예: 꽃님 사진관" onChange={(event) => setName(event.target.value)} /></label>
           <div className={styles.sliders}>
-            {sliders.map((slider) => <label key={slider.key}><span>{slider.label}<strong>{calibration[slider.key]}</strong></span><input type="range" aria-label={slider.label} min={slider.min} max={slider.max} step={slider.step} value={calibration[slider.key]} onInput={(event) => setCalibration((current) => ({ ...current, [slider.key]: Number(event.currentTarget.value) }))} /></label>)}
+            {sliders.map((slider) => <label key={slider.key}><span>{slider.label}<strong>{calibration[slider.key]}</strong></span><input type="range" aria-label={slider.label} min={slider.min} max={slider.max} step={slider.step} value={calibration[slider.key]} onInput={(event) => calibrationInput(slider.key, event.currentTarget.value, setCalibration)} /></label>)}
           </div>
           <output data-testid="calibration-values" className={styles.values}>{JSON.stringify(calibration)}</output>
           {message && <p role="status" className={styles.message}>{message}</p>}
