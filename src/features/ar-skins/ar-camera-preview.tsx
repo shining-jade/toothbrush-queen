@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CameraPreview } from "@/features/brushing-session/camera-preview";
 import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
+import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 import { FacePresenceClock } from "./face-presence-clock";
 import { mirrorPose, smoothFacePose, type FacePose } from "./face-pose";
@@ -17,16 +18,27 @@ export function ArCameraPreview({
   tracker,
   elapsedSec,
   onFaceDetectedSecChange,
+  preparing = false,
+  readinessDetector,
+  onReady,
 }: {
   stream: MediaStream;
   skin: ArSkin;
   tracker: FaceTracker;
   elapsedSec: number;
   onFaceDetectedSecChange: (seconds: number | null) => void;
+  preparing?: boolean;
+  readinessDetector?: ToothbrushLikeDetector;
+  onReady?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const elapsedRef = useRef(elapsedSec);
+  const preparingRef = useRef(preparing);
+  const readinessDetectorRef = useRef(readinessDetector);
+  const onReadyRef = useRef(onReady);
+  const readinessCompleteRef = useRef(false);
+  const faceClockRef = useRef(new FacePresenceClock());
   const [pose, setPose] = useState<FacePose | null>(null);
   const [detected, setDetected] = useState(false);
   const [hasTrackingResult, setHasTrackingResult] = useState(false);
@@ -36,6 +48,16 @@ export function ArCameraPreview({
   const [imageSize, setImageSize] = useState<PixelSize | null>(null);
 
   useEffect(() => { elapsedRef.current = elapsedSec; }, [elapsedSec]);
+
+  useEffect(() => {
+    preparingRef.current = preparing;
+    readinessDetectorRef.current = readinessDetector;
+    onReadyRef.current = onReady;
+    readinessCompleteRef.current = false;
+    readinessDetector?.reset();
+    faceClockRef.current = new FacePresenceClock();
+    if (preparing) onFaceDetectedSecChange(0);
+  }, [onFaceDetectedSecChange, onReady, preparing, readinessDetector]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -59,13 +81,14 @@ export function ArCameraPreview({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const clock = new FacePresenceClock();
     let active = true;
     void tracker.start(video, (result) => {
       if (!active) return;
       const visible = result.detected && result.pose !== null;
       setHasTrackingResult(true);
-      clock.update({ nowMs: result.nowMs, visible, documentVisible: !document.hidden });
+      if (!preparingRef.current) {
+        faceClockRef.current.update({ nowMs: result.nowMs, visible, documentVisible: !document.hidden });
+      }
       setDetected(visible);
       if (result.pose) {
         setHasDetectedFace(true);
@@ -74,7 +97,22 @@ export function ArCameraPreview({
       } else {
         setPose(null);
       }
-      onFaceDetectedSecChange(clock.seconds(elapsedRef.current));
+      if (preparingRef.current) {
+        if (!visible || !result.pose) {
+          readinessDetectorRef.current?.reset();
+        } else if (!readinessCompleteRef.current && videoRef.current && readinessDetectorRef.current) {
+          try {
+            if (readinessDetectorRef.current.observe(videoRef.current, result.pose, result.nowMs)) {
+              readinessCompleteRef.current = true;
+              onReadyRef.current?.();
+            }
+          } catch {
+            readinessDetectorRef.current.reset();
+          }
+        }
+      } else {
+        onFaceDetectedSecChange(faceClockRef.current.seconds(elapsedRef.current));
+      }
     }, () => {
       if (!active) return;
       setFailed(true);
@@ -114,7 +152,11 @@ export function ArCameraPreview({
         />
       )}
       {failed ? <p className={styles.message}>AR 효과 없이 계속 진행해요.</p>
-        : !detected && (
+        : preparing ? (
+          <p className={styles.message}>
+            {detected ? "칫솔을 입 가까이 가져와 주세요." : "얼굴을 먼저 화면에 보여주세요."}
+          </p>
+        ) : !detected && (
           <p className={styles.message}>
             {hasDetectedFace || hasTrackingResult
               ? "얼굴이 화면에 보이도록 해주세요!"

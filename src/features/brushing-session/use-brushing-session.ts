@@ -54,7 +54,7 @@ export type BrushingSessionState =
   | { status: "choosingSkin"; mode: BrushingMode; challenge: Challenge; progress: StudentProgress }
   | { status: "explaining"; mode: BrushingMode }
   | { status: "requestingCamera"; mode: BrushingMode; progress: number }
-  | ({ status: "running" | "readyToSubmit" } & RunningSession)
+  | ({ status: "preparing" | "running" | "readyToSubmit" } & RunningSession)
   | { status: "error"; message: string };
 
 export function useBrushingSession(
@@ -145,13 +145,13 @@ export function useBrushingSession(
       }
       if (operationGeneration.current !== generation) return;
       setState({
-        status: "running",
+        status: camera.mode === "camera" ? "preparing" : "running",
         ...attempt,
         challengeId,
         deviceToken,
         cameraMode: camera.mode,
         stream: camera.stream,
-        startedAtMs: now(),
+        startedAtMs: camera.mode === "camera" ? 0 : now(),
         elapsedSec: 0,
         remainingSec: attempt.durationSec === "free" ? null : attempt.durationSec,
         hiddenSec: 0,
@@ -161,6 +161,12 @@ export function useBrushingSession(
       setState({ status: "error", message: "양치 도전을 시작하지 못했어요." });
     }
   }, [challengeId, now, services, state]);
+
+  const beginBrushing = useCallback(() => {
+    setState((current) => current.status === "preparing"
+      ? { ...current, status: "running", startedAtMs: now() }
+      : current);
+  }, [now]);
 
   const timerIsActive = state.status === "running" || state.status === "readyToSubmit";
   const timerDurationSec = timerIsActive ? state.durationSec : null;
@@ -223,5 +229,5 @@ export function useBrushingSession(
     setPreflightAttempt((value) => value + 1);
   }, []);
 
-  return { state, chooseDuration, confirmSkin, retryPreflight, start };
+  return { state, chooseDuration, confirmSkin, retryPreflight, start, beginBrushing };
 }

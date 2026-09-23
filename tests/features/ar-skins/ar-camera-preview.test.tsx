@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
 import { AR_SKINS, mergeSkinCatalog } from "@/features/ar-skins/skin-registry";
 import type { FaceTrackingResult, FaceTracker } from "@/lib/face-tracking/face-tracker";
+import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 function fixture() {
   let emitResult: ((result: FaceTrackingResult) => void) | undefined;
@@ -159,5 +160,35 @@ describe("ArCameraPreview", () => {
     stageSize = { width: 430, height: 932 };
     act(() => resizeStage?.());
     expect(overlay).toHaveStyle({ left: "215px", width: "414px" });
+  });
+
+  it("guides face first and completes readiness after a toothbrush-like candidate", async () => {
+    const { tracker, emit } = fixture();
+    const onReady = vi.fn();
+    const detector: ToothbrushLikeDetector = {
+      observe: vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true),
+      reset: vi.fn(),
+    };
+    render(
+      <ArCameraPreview
+        stream={{} as MediaStream}
+        skin={AR_SKINS.cat}
+        tracker={tracker}
+        elapsedSec={0}
+        onFaceDetectedSecChange={vi.fn()}
+        preparing
+        readinessDetector={detector}
+        onReady={onReady}
+      />,
+    );
+    await act(async () => undefined);
+    expect(screen.getByText("얼굴을 먼저 화면에 보여주세요.")).toBeVisible();
+
+    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
+    expect(screen.getByText("칫솔을 입 가까이 가져와 주세요.")).toBeVisible();
+    expect(onReady).not.toHaveBeenCalled();
+
+    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 }, nowMs: 900 }));
+    expect(onReady).toHaveBeenCalledOnce();
   });
 });
