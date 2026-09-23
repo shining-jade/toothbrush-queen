@@ -1,34 +1,40 @@
+import type { BrushingMode } from "@/shared/brushing-mode";
+
 export type BrushingDuration = 60 | 180;
 
 export function timerState(
   startedAtMs: number,
   nowMs: number,
-  durationSec: BrushingDuration,
+  mode: BrushingMode,
   hiddenMs = 0,
 ) {
   const activeMs = Math.max(0, nowMs - startedAtMs - hiddenMs);
-  const elapsedSec = Math.min(durationSec, Math.floor(activeMs / 1000));
+  const rawElapsedSec = Math.floor(activeMs / 1000);
+  const elapsedSec = mode === "free"
+    ? Math.min(300, rawElapsedSec)
+    : Math.min(mode, rawElapsedSec);
+  const remainingSec = mode === "free" ? null : mode - elapsedSec;
+  const ready = mode === "free" ? elapsedSec >= 60 : elapsedSec >= mode;
   return {
     elapsedSec,
-    remainingSec: durationSec - elapsedSec,
-    ready: elapsedSec >= durationSec,
+    remainingSec,
+    displaySec: mode === "free" ? elapsedSec : remainingSec,
+    ready,
+    reachedLimit: mode === "free" && elapsedSec >= 300,
   };
 }
 
-type BrushingMachineInput = {
-  durationSec: BrushingDuration;
+type BrushingMachineInput = ({ mode: BrushingMode } | { durationSec: BrushingDuration }) & {
   startedAtMs: number;
   hiddenMs?: number;
 };
 
-export function createBrushingMachine({
-  durationSec,
-  startedAtMs,
-  hiddenMs = 0,
-}: BrushingMachineInput) {
+export function createBrushingMachine(input: BrushingMachineInput) {
+  const { startedAtMs, hiddenMs = 0 } = input;
+  const mode = "mode" in input ? input.mode : input.durationSec;
   return {
     at(nowMs: number) {
-      const timer = timerState(startedAtMs, nowMs, durationSec, hiddenMs);
+      const timer = timerState(startedAtMs, nowMs, mode, hiddenMs);
       return {
         state: timer.ready ? "readyToSubmit" as const : "running" as const,
         ...timer,
