@@ -170,6 +170,21 @@ describe("Sheets repositories", () => {
     });
   });
 
+  it("updates an existing challenge without appending a duplicate row", () => {
+    const memory = new InMemorySheetGateway();
+    const challenges = new ChallengeRepository(memory);
+    const stored = challenges.insert({
+      challengeId: "ABC123", name: "5일", startDate: "2026-09-23", endDate: "2026-09-27",
+      targetDays: 5, timeZone: "Asia/Seoul", durationMode: "choice", dailyLimit: 1,
+      status: "active", createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z",
+    });
+
+    challenges.update({ ...stored, name: "10일", targetDays: 10, endDate: "2026-10-02" });
+
+    expect(challenges.findById("ABC123")).toMatchObject({ name: "10일", targetDays: 10 });
+    expect(memory.readAll("Challenges")).toHaveLength(1);
+  });
+
   it("rejects a sheet whose headers are out of order", () => {
     expect(() => assertSheetHeaders("Students", ["학생ID", "이름"])).toThrow(
       "SHEET_SCHEMA_MISMATCH:Students",

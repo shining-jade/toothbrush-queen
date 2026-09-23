@@ -47,6 +47,14 @@ export class ChallengeRepository {
     return value;
   }
 
+  update(value: ChallengeRow) {
+    const rowIndex = this.gateway.readAll("Challenges")
+      .findIndex((row) => String(row[0]) === value.challengeId);
+    if (rowIndex < 0) throw new Error("CHALLENGE_NOT_FOUND");
+    this.gateway.update("Challenges", rowIndex + 2, toRow(value));
+    return value;
+  }
+
   findById(challengeId: string) {
     const row = this.gateway
       .readAll("Challenges")

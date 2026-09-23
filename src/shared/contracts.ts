@@ -71,6 +71,15 @@ export const AdminDashboardInputSchema = z.object({
   challengeId: ChallengeIdSchema,
 }).strict();
 
+export const AdminChallengeSaveInputSchema = z.object({
+  challengeId: ChallengeIdSchema,
+  name: z.string().trim().min(1).max(80),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+  targetDays: z.number().int().min(1).max(365),
+  durationMode: z.union([z.literal(60), z.literal(180), z.literal("choice")]),
+}).strict();
+
 export const ChallengeSchema = z
   .object({
     challengeId: ChallengeIdSchema,
@@ -229,6 +238,7 @@ export type AdminAssetUploadResult = z.infer<typeof AdminAssetUploadResultSchema
 export type AdminSkinDraft = z.infer<typeof AdminSkinDraftSchema>;
 export type AdminSkin = z.infer<typeof AdminSkinSchema>;
 export type AdminDashboardInput = z.infer<typeof AdminDashboardInputSchema>;
+export type AdminChallengeSaveInput = z.infer<typeof AdminChallengeSaveInputSchema>;
 export type AdminStudentSummary = z.infer<typeof AdminStudentSummarySchema>;
 export type AdminDashboardResult = z.infer<typeof AdminDashboardResultSchema>;
 export type StudentProgress = z.infer<typeof StudentProgressSchema>;

@@ -49,6 +49,10 @@ describe("Apps Script router", () => {
       summary: { totalStudents: 0, completedToday: 0, missingToday: 0, completedChallenge: 0 },
       students: [],
     }),
+    saveAdminChallenge: (_token, input) => ({
+      ...challenge,
+      ...input,
+    }),
   };
   const router = createRouter(services);
 
@@ -115,5 +119,16 @@ describe("Apps Script router", () => {
       auth: { adminToken: "a".repeat(32) },
       payload: { challengeId: "ABC123" },
     })).toMatchObject({ ok: true, data: { challenge, students: [] } });
+  });
+
+  it("routes active challenge settings updates", () => {
+    expect(router({
+      action: "admin.challenge.save",
+      auth: { adminToken: "a".repeat(32) },
+      payload: {
+        challengeId: "ABC123", name: "10일 양치왕", startDate: "2026-10-01",
+        endDate: "2026-10-14", targetDays: 10, durationMode: "choice",
+      },
+    })).toMatchObject({ ok: true, data: { name: "10일 양치왕", targetDays: 10 } });
   });
 });

@@ -1,5 +1,6 @@
 import {
   AdminAssetUploadInputSchema,
+  AdminChallengeSaveInputSchema,
   AdminDashboardInputSchema,
   AdminLoginInputSchema,
   AdminSkinDraftSchema,
@@ -18,12 +19,14 @@ import {
   type StartAttemptResult,
   type StudentProgress,
   type AdminAssetUploadResult,
+  type AdminChallengeSaveInput,
   type AdminDashboardResult,
   type AdminLoginResult,
   type AdminSkin,
 } from "../../src/shared/contracts";
 import { z } from "zod";
 import { AdminAuthService } from "./domain/admin-auth-service";
+import { AdminChallengeService } from "./domain/admin-challenge-service";
 import { AdminDashboardService } from "./domain/admin-dashboard-service";
 import { AdminSkinService } from "./domain/admin-skin-service";
 import { ProgressService } from "./domain/progress-service";
@@ -56,6 +59,7 @@ export type RouterServices = {
   listAdminSkins(token: string): AdminSkin[];
   setAdminSkinEnabled(token: string, skinId: string, enabled: boolean): AdminSkin;
   getAdminDashboard(token: string, challengeId: string): AdminDashboardResult;
+  saveAdminChallenge(token: string, input: AdminChallengeSaveInput): Challenge;
 };
 
 const errorMessages: Record<string, string> = {
@@ -66,6 +70,9 @@ const errorMessages: Record<string, string> = {
   ADMIN_LOGIN_FAILED: "비밀번호를 확인해 주세요.",
   ADMIN_LOGIN_RATE_LIMITED: "로그인 시도가 너무 많아요. 10분 후 다시 시도해 주세요.",
   ADMIN_SESSION_EXPIRED: "관리자 로그인이 필요합니다.",
+  INVALID_CHALLENGE_PERIOD: "종료일은 시작일보다 빠를 수 없습니다.",
+  TARGET_DAYS_EXCEED_PERIOD: "목표 일수는 챌린지 기간보다 길 수 없습니다.",
+  CHALLENGE_NOT_EDITABLE: "진행 중인 챌린지만 수정할 수 있습니다.",
   INVALID_IMAGE_EXTENSION: "PNG 또는 WebP 파일을 선택해 주세요.",
   INVALID_IMAGE_SIZE: "이미지는 2MB 이하여야 합니다.",
   INVALID_IMAGE_SIGNATURE: "올바른 이미지 파일이 아닙니다.",
@@ -151,6 +158,12 @@ export function createRouter(services: RouterServices) {
           request.auth?.adminToken ?? "", input.challengeId,
         ) };
       }
+      if (request.action === "admin.challenge.save") {
+        return { ok: true, data: services.saveAdminChallenge(
+          request.auth?.adminToken ?? "",
+          AdminChallengeSaveInputSchema.parse(request.payload),
+        ) };
+      }
       return failure("ACTION_NOT_FOUND");
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -202,6 +215,7 @@ export function createProductionRouter() {
     adminAuth, challenges, students, completions, now,
     (date, timeZone) => Utilities.formatDate(date, timeZone, "yyyy-MM-dd"),
   );
+  const adminChallenges = new AdminChallengeService(adminAuth, challenges, now);
   const attemptTokens = new AttemptTokenService(
     new AppsScriptAttemptCrypto(secret), () => now().getTime(),
     () => `attempt-${security.randomToken().slice(0, 24)}`,
@@ -256,5 +270,6 @@ export function createProductionRouter() {
     listAdminSkins: (token) => adminSkins.listSkins(token),
     setAdminSkinEnabled: (token, skinId, enabled) => adminSkins.setEnabled(token, skinId, enabled),
     getAdminDashboard: (token, challengeId) => adminDashboard.get(token, challengeId),
+    saveAdminChallenge: (token, input) => adminChallenges.save(token, input),
   });
 }
