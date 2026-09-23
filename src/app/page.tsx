@@ -1,13 +1,22 @@
-export default function HomePage() {
+import { StudentEntry } from "@/features/student-session/student-entry";
+
+import styles from "./page.module.css";
+
+type HomePageProps = {
+  searchParams: Promise<{ challenge?: string | string[] }>;
+};
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  const challengeId = typeof params.challenge === "string" ? params.challenge : "";
+
   return (
     <main className="app-shell">
-      <header className="brand-header">
+      <header className={`brand-header ${styles.header}`}>
         <span aria-hidden="true">👑</span>
         <h1>양치왕</h1>
       </header>
-      <section className="loading-panel" aria-live="polite" aria-busy="true">
-        챌린지를 불러오고 있어요.
-      </section>
+      <StudentEntry challengeId={challengeId} />
     </main>
   );
 }

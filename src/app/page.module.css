@@ -1,0 +1,104 @@
+.header {
+  margin-bottom: 24px;
+}
+
+:global(.identity-card),
+:global(.challenge-card),
+:global(.error-panel) {
+  padding: 24px;
+  border: 1px solid rgb(88 117 216 / 14%);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 14px 40px rgb(33 48 88 / 10%);
+}
+
+:global(.eyebrow) {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+:global(.identity-card h2),
+:global(.challenge-card h2) {
+  margin: 0 0 20px;
+}
+
+:global(.identity-card form),
+:global(.identity-card label) {
+  display: grid;
+  gap: 8px;
+}
+
+:global(.identity-card form) {
+  gap: 18px;
+}
+
+:global(.number-fields) {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+:global(.identity-card input) {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #cbd3e5;
+  border-radius: 12px;
+}
+
+:global(.primary-action) {
+  display: grid;
+  width: 100%;
+  min-height: 54px;
+  place-items: center;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--primary);
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+:global(.primary-action:disabled) {
+  opacity: 0.6;
+}
+
+:global(.resume-bar) {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #e7edff;
+}
+
+:global(.text-button) {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+:global(.student-name),
+:global(.status-copy) {
+  color: var(--muted);
+}
+
+:global(.progress-summary) {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+:global(.progress-summary strong) {
+  font-size: 1.5rem;
+}
+
+:global(.progress-summary progress) {
+  width: 100%;
+  height: 14px;
+}

@@ -38,6 +38,6 @@
   ],
   "exclude": [
     "node_modules",
-    "apps-script/dist"
+    "apps-script"
   ]
 }
