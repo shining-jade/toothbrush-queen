@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "gas:build": "node apps-script/scripts/build.mjs"
+    "gas:build": "node apps-script/scripts/build.mjs",
+    "verify": "pnpm lint && pnpm test && pnpm gas:build && pnpm build && pnpm test:e2e"
   },
   "dependencies": {
     "next": "latest",
