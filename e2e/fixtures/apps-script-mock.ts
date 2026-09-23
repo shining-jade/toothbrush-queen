@@ -76,6 +76,23 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
       if (body.payload?.password !== options.adminPassword) return failure(route, "ADMIN_LOGIN_FAILED", "비밀번호를 확인해 주세요.");
       return success(route, { adminToken: "a".repeat(32), expiresAtMs: Date.now() + 4 * 60 * 60 * 1000 });
     }
+    if (body.action === "admin.dashboard.get") {
+      if (!body.auth?.adminToken) return failure(route, "ADMIN_SESSION_EXPIRED", "관리자 로그인이 필요합니다.");
+      return success(route, {
+        challenge: { ...challenge, challengeId: String(body.payload?.challengeId ?? challenge.challengeId) },
+        summary: { totalStudents: 3, completedToday: 1, missingToday: 2, completedChallenge: 1 },
+        students: [
+          { studentId: "student-1", grade: "2", classNo: "3", studentNo: "12", name: "김민지", acceptedDays: 5, targetDays: challenge.targetDays, completedToday: true, lastParticipationDate: "2026-09-23", participationStatus: "completed" },
+          { studentId: "student-2", grade: "2", classNo: "4", studentNo: "7", name: "이서준", acceptedDays: 2, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: "2026-09-22", participationStatus: "missingToday" },
+          { studentId: "student-3", grade: "3", classNo: "1", studentNo: "2", name: "박지우", acceptedDays: 0, targetDays: challenge.targetDays, completedToday: false, lastParticipationDate: null, participationStatus: "noRecord" },
+        ],
+      });
+    }
+    if (body.action === "admin.challenge.save") {
+      if (!body.auth?.adminToken) return failure(route, "ADMIN_SESSION_EXPIRED", "관리자 로그인이 필요합니다.");
+      Object.assign(challenge, body.payload);
+      return success(route, challenge);
+    }
     if (body.action === "admin.skin.list") {
       if (!body.auth?.adminToken) return failure(route, "ADMIN_SESSION_EXPIRED", "관리자 로그인이 필요합니다.");
       return success(route, adminSkins);

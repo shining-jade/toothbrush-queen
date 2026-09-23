@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { mockAppsScript } from "./fixtures/apps-script-mock";
 
 async function login(page: Page) {
-  await page.goto("/admin");
+  await page.goto("/admin?returnTo=/admin/skins");
   await page.getByLabel("관리자 비밀번호").fill("test-admin-password");
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page.getByRole("heading", { name: "AR 스킨 관리" })).toBeVisible();

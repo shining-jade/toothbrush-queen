@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 
 import type { AdminChallengeSaveInput, Challenge } from "@/shared/contracts";
 
@@ -23,17 +23,6 @@ export function ChallengeSettingsForm({
     targetDays: challenge.targetDays,
     durationMode: challenge.durationMode,
   });
-  useEffect(() => {
-    setForm({
-      challengeId: challenge.challengeId,
-      name: challenge.name,
-      startDate: challenge.startDate,
-      endDate: challenge.endDate,
-      targetDays: challenge.targetDays,
-      durationMode: challenge.durationMode,
-    });
-  }, [challenge]);
-
   function submit(event: FormEvent) {
     event.preventDefault();
     onSave(form);

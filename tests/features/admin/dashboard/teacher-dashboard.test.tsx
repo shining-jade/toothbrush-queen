@@ -24,6 +24,13 @@ function services(): TeacherDashboardServices {
 describe("TeacherDashboard", () => {
   it("loads teacher summaries and saves a ten-day preset", async () => {
     const activeServices = services();
+    vi.mocked(activeServices.loadDashboard)
+      .mockResolvedValueOnce(dashboard)
+      .mockResolvedValueOnce({
+        ...dashboard,
+        challenge: { ...dashboard.challenge, targetDays: 10 },
+        summary: { ...dashboard.summary, completedChallenge: 0 },
+      });
     render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
 
     expect(await screen.findByRole("article", { name: "전체 학생" })).toHaveTextContent("4명");
@@ -39,7 +46,9 @@ describe("TeacherDashboard", () => {
       "a".repeat(32),
       expect.objectContaining({ challengeId: "BRUSH5", targetDays: 10 }),
     ));
+    await vi.waitFor(() => expect(activeServices.loadDashboard).toHaveBeenCalledTimes(2));
     expect(await screen.findByText("챌린지 설정을 저장했어요.")).toBeVisible();
+    expect(screen.getByRole("article", { name: "완주 학생" })).toHaveTextContent("0명");
   });
 
   it("returns to login without loading data when the admin session is missing", async () => {

@@ -17,6 +17,7 @@ import {
 } from "@/shared/contracts";
 
 import { ChallengeSettingsForm } from "./challenge-settings-form";
+import { ChallengeQr } from "./challenge-qr";
 import { DashboardSummary } from "./dashboard-summary";
 import { StudentParticipationTable } from "./student-participation-table";
 import styles from "./teacher-dashboard.module.css";
@@ -30,9 +31,8 @@ export type TeacherDashboardServices = {
 
 function browserServices(): TeacherDashboardServices {
   const client = new AppsScriptClient(getClientConfig().appsScriptUrl);
-  const store = new AdminSessionStore();
   return {
-    getToken: () => store.get()?.adminToken ?? null,
+    getToken: () => new AdminSessionStore().get()?.adminToken ?? null,
     loadDashboard: (token, challengeId) => client.request(
       "admin.dashboard.get", { challengeId }, AdminDashboardResultSchema, { adminToken: token },
     ),
@@ -80,8 +80,9 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
     setError("");
     setMessage("");
     try {
-      const challenge = await activeServices.saveChallenge(token, input);
-      setDashboard((current) => current ? { ...current, challenge } : current);
+      await activeServices.saveChallenge(token, input);
+      const refreshed = await activeServices.loadDashboard(token, challengeId);
+      setDashboard(refreshed);
       setMessage("챌린지 설정을 저장했어요.");
     } catch (caught) {
       if (caught instanceof ApiError && caught.code === "ADMIN_SESSION_EXPIRED") {
@@ -106,7 +107,13 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
       <DashboardSummary summary={dashboard.summary} />
       {message && <p role="status" className={styles.success}>{message}</p>}
       {error && <p role="alert" className={styles.error}>{error}</p>}
-      <ChallengeSettingsForm challenge={dashboard.challenge} saving={saving} onSave={(input) => void saveChallenge(input)} />
+      <ChallengeSettingsForm
+        key={`${dashboard.challenge.challengeId}-${dashboard.challenge.name}-${dashboard.challenge.startDate}-${dashboard.challenge.endDate}-${dashboard.challenge.targetDays}-${dashboard.challenge.durationMode}`}
+        challenge={dashboard.challenge}
+        saving={saving}
+        onSave={(input) => void saveChallenge(input)}
+      />
+      <ChallengeQr challengeId={dashboard.challenge.challengeId} />
       <StudentParticipationTable students={dashboard.students} />
     </main>
   );
