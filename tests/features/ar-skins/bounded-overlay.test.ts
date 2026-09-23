@@ -23,7 +23,7 @@ describe("boundedOverlayStyle", () => {
     );
 
     expect(style).toMatchObject({ left: "248px", top: "136px", width: "256px" });
-    expect(style?.transform).toContain("rotate(90deg)");
+    expect(style?.transform).toBe("translate3d(-50%, -50%, 0) rotate(90deg)");
   });
 
   it("returns no style until stage and image dimensions are valid", () => {

@@ -21,7 +21,7 @@ type FaceTrackerDependencies = {
 const WASM_PATH = "/mediapipe/wasm";
 // SHA-256: 64184E229B263107BC2B804C6625DB1341FF2BB731874B0BCC2FE6544E0BC9FF
 const MODEL_PATH = "/mediapipe/models/face_landmarker.task";
-const MIN_INFERENCE_INTERVAL_MS = 66;
+const MIN_INFERENCE_INTERVAL_MS = 50;
 
 async function createBrowserLandmarker(): Promise<Landmarker> {
   const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");

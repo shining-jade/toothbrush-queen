@@ -47,6 +47,14 @@ test("student chooses a skin and free brushing records measured time", async ({ 
   await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
   await join(page);
   await page.getByRole("button", { name: "자유 양치" }).click();
+  for (const card of await page.getByRole("radio").all()) {
+    const cardBox = await card.boundingBox();
+    const imageBox = await card.locator("img").boundingBox();
+    expect(cardBox).not.toBeNull();
+    expect(imageBox).not.toBeNull();
+    expect(imageBox!.x).toBeGreaterThanOrEqual(cardBox!.x + 8);
+    expect(imageBox!.x + imageBox!.width).toBeLessThanOrEqual(cardBox!.x + cardBox!.width - 8);
+  }
   await page.getByRole("radio", { name: "반짝 토끼" }).click();
   if (process.env.CAPTURE_VISUALS === "1") {
     await page.screenshot({ path: "docs/screenshots/ar-animal-selection.png", fullPage: true });

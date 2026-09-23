@@ -15,6 +15,7 @@ function validLandmarks() {
   landmarks[33] = { x: 0.3, y: 0.4 };
   landmarks[263] = { x: 0.7, y: 0.4 };
   landmarks[10] = { x: 0.5, y: 0.2 };
+  landmarks[152] = { x: 0.5, y: 0.8 };
   landmarks[234] = { x: 0.2, y: 0.5 };
   landmarks[454] = { x: 0.8, y: 0.5 };
   return landmarks;
@@ -69,18 +70,18 @@ describe("MediaPipe face tracker", () => {
     expect(test.detectForVideo).not.toHaveBeenCalled();
   });
 
-  it("runs no more than fifteen inferences per second", async () => {
+  it("runs no more than twenty inferences per second", async () => {
     const test = harness();
     const onResult = vi.fn();
     await test.tracker.start(fakeVideo(), onResult);
 
     test.runFrame(0);
     test.runFrame(20);
-    test.runFrame(67);
+    test.runFrame(50);
     test.runFrame(100);
 
-    expect(test.detectForVideo).toHaveBeenCalledTimes(2);
-    expect(onResult).toHaveBeenCalledTimes(2);
+    expect(test.detectForVideo).toHaveBeenCalledTimes(3);
+    expect(onResult).toHaveBeenCalledTimes(3);
     expect(onResult.mock.calls[0][0]).toMatchObject({ detected: true, nowMs: 0 });
   });
 

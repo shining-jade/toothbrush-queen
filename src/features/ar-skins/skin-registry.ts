@@ -11,9 +11,9 @@ export type ArSkin = {
 };
 
 export const AR_SKINS = {
-  cat: { id: "cat", label: "냥냥 볼터치", src: "/ar-skins/cat.png", calibration: { anchorX: 0, anchorY: -0.38, scale: 1.42, rotationOffset: 0 }, bundled: true },
-  rabbit: { id: "rabbit", label: "반짝 토끼", src: "/ar-skins/rabbit.png", calibration: { anchorX: 0, anchorY: -0.55, scale: 1.5, rotationOffset: 0 }, bundled: true },
-  bear: { id: "bear", label: "하트 곰돌이", src: "/ar-skins/bear.png", calibration: { anchorX: 0, anchorY: -0.36, scale: 1.4, rotationOffset: 0 }, bundled: true },
+  cat: { id: "cat", label: "냥냥 볼터치", src: "/ar-skins/cat.png", calibration: { anchorX: 0, anchorY: -0.1, scale: 1.42, rotationOffset: 0 }, bundled: true },
+  rabbit: { id: "rabbit", label: "반짝 토끼", src: "/ar-skins/rabbit.png", calibration: { anchorX: 0, anchorY: -0.1, scale: 1.5, rotationOffset: 0 }, bundled: true },
+  bear: { id: "bear", label: "하트 곰돌이", src: "/ar-skins/bear.png", calibration: { anchorX: 0, anchorY: -0.08, scale: 1.4, rotationOffset: 0 }, bundled: true },
   crown: { id: "crown", label: "양치왕 왕관", src: "/ar-skins/crown.png", calibration: { anchorX: 0, anchorY: -0.5, scale: 1.28, rotationOffset: 0 }, bundled: true },
 } as const satisfies Record<BasicSkinId | "crown", ArSkin>;
 
