@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BrushingScreen, type BrushingScreenServices } from "@/features/brushing-session/brushing-screen";
+import type { CompletionScreenServices } from "@/features/completion/completion-screen";
 import type { FaceTrackingResult } from "@/lib/face-tracking/face-tracker";
 
 const challenge = { challengeId: "ABC123", name: "5일 양치왕 챌린지", startDate: "2026-09-20", endDate: "2026-09-30", targetDays: 5, timeZone: "Asia/Seoul", durationMode: "choice" as const, dailyLimit: 1, status: "active" as const };
@@ -28,8 +29,12 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
   return { value, tracker, emit: (result: FaceTrackingResult) => emitResult?.(result) };
 }
 
-async function reachPrivacyNotice(testServices: ReturnType<typeof services>, mode = "60초") {
-  render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+async function reachPrivacyNotice(
+  testServices: ReturnType<typeof services>,
+  mode = "60초",
+  completionServices?: CompletionScreenServices,
+) {
+  render(<BrushingScreen challengeId="ABC123" services={testServices.value} completionServices={completionServices} />);
   fireEvent.click(await screen.findByRole("button", { name: mode }));
   expect(screen.getAllByRole("radio")).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
@@ -38,6 +43,15 @@ async function reachPrivacyNotice(testServices: ReturnType<typeof services>, mod
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe("BrushingScreen", () => {
+  it("shows a spinner while progress is loading", () => {
+    const testServices = services();
+    vi.mocked(testServices.value.getProgress).mockReturnValue(new Promise(() => undefined));
+
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+
+    expect(screen.getByRole("status", { name: "진행 상황을 확인하고 있어요." })).toBeVisible();
+  });
+
   it("loads progress before exposing camera permission and offers three skins", async () => {
     const testServices = services();
     await reachPrivacyNotice(testServices);
@@ -82,7 +96,7 @@ describe("BrushingScreen", () => {
     expect(document.querySelector("video")).toBeNull();
   });
 
-  it("counts free brushing from 00:00 and enables completion at 01:00", async () => {
+  it("allows completion immediately while free brushing time keeps counting", async () => {
     vi.useFakeTimers();
     vi.spyOn(performance, "now").mockReturnValue(0);
     const testServices = services();
@@ -92,11 +106,28 @@ describe("BrushingScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
     expect(screen.getByText("00:00")).toBeVisible();
-    expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
     vi.spyOn(performance, "now").mockReturnValue(60_000);
     act(() => vi.advanceTimersByTime(60_000));
     expect(screen.getByText("01:00")).toBeVisible();
     expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
+  });
+
+  it("opens the completion screen when a fixed timer is stopped early", async () => {
+    const testServices = services();
+    await reachPrivacyNotice(testServices, "60초", {
+      submitOrQueue: vi.fn(),
+      retryPending: vi.fn(),
+      loadPending: vi.fn(() => null),
+      getDeviceToken: vi.fn(() => "device-token"),
+    });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+
+    fireEvent.click(screen.getByRole("button", { name: "양치 완료 기록하기" }));
+
+    expect(screen.getByRole("heading", { name: "양치 기록 보내기" })).toBeVisible();
+    expect(screen.getByText("총 0분 0초 동안 양치했어요.")).toBeVisible();
+    expect(testServices.value.camera.stop).toHaveBeenCalled();
   });
 
   it("submits only aggregate face-detected seconds", async () => {

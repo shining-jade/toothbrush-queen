@@ -23,6 +23,34 @@ function fixture() {
 }
 
 describe("ArCameraPreview", () => {
+  it("waits for a detected face and hides the skin as soon as the face is lost", async () => {
+    const { tracker, emit } = fixture();
+    render(
+      <ArCameraPreview
+        stream={{} as MediaStream}
+        skin={AR_SKINS.cat}
+        tracker={tracker}
+        elapsedSec={0}
+        onFaceDetectedSecChange={vi.fn()}
+      />,
+    );
+    await act(async () => undefined);
+
+    expect(screen.getByText("얼굴을 인식하고 있어요.")).toBeVisible();
+    expect(screen.queryByTestId("ar-skin-overlay")).toBeNull();
+
+    act(() => emit({
+      detected: true,
+      pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
+      nowMs: 100,
+    }));
+    expect(screen.getByTestId("ar-skin-overlay")).toBeVisible();
+
+    act(() => emit({ detected: false, pose: null, nowMs: 200 }));
+    expect(screen.queryByTestId("ar-skin-overlay")).toBeNull();
+    expect(screen.getByText("얼굴이 화면에 보이도록 해주세요!")).toBeVisible();
+  });
+
   it("shows face guidance and keeps the camera after tracking fails", async () => {
     const { tracker, emit, fail } = fixture();
     const onTime = vi.fn();

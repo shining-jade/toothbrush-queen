@@ -51,7 +51,6 @@
   color: var(--muted);
 }
 
-:global(.countdown),
 :global(.brushing-stage > p),
 :global(.brushing-stage > button) {
   position: relative;
@@ -59,7 +58,10 @@
 }
 
 :global(.countdown) {
-  justify-self: end;
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 1;
   padding: 10px 16px;
   border-radius: 999px;
   background: rgb(255 255 255 / 90%);

@@ -43,6 +43,7 @@ describe("CompletionScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "챌린지 완료하고 제출하기" }));
     expect(screen.getByRole("button", { name: "제출 중" })).toBeDisabled();
+    expect(screen.getByRole("status", { name: "양치 기록을 제출하고 있어요." })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "제출 중" }));
     expect(services.submitOrQueue).toHaveBeenCalledOnce();
 

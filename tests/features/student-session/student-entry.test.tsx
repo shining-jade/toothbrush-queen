@@ -61,6 +61,15 @@ function services(token: string | null): StudentSessionServices {
 }
 
 describe("StudentEntry", () => {
+  it("shows a spinner while the challenge is loading", () => {
+    const testServices = services(null);
+    testServices.api.request = vi.fn(() => new Promise(() => undefined));
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+
+    expect(screen.getByRole("status", { name: "챌린지를 불러오고 있어요." })).toBeVisible();
+  });
+
   it("resumes and offers a different-student action", async () => {
     render(<StudentEntry challengeId="ABC123" services={services("t".repeat(32))} />);
 

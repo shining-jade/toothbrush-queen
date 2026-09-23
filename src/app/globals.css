@@ -68,3 +68,30 @@ a {
   color: var(--muted);
   box-shadow: 0 12px 30px rgb(33 48 88 / 8%);
 }
+
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.loading-spinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border: 3px solid rgb(88 117 216 / 22%);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner { animation-duration: 1.8s; }
+}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 
+import { LoadingIndicator } from "@/components/loading-indicator";
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
 import { AR_SKINS, mergeSkinCatalog, type ArSkin } from "@/features/ar-skins/skin-registry";
 import { SkinSelector } from "@/features/ar-skins/skin-selector";
@@ -78,7 +79,7 @@ export function BrushingScreen({
   }
 
   if (state.status === "loadingProgress") {
-    return <section className="brush-card" aria-live="polite">진행 상황을 확인하고 있어요.</section>;
+    return <section className="brush-card"><LoadingIndicator label="진행 상황을 확인하고 있어요." /></section>;
   }
 
   if (state.status === "progressError") {
@@ -142,7 +143,7 @@ export function BrushingScreen({
   }
 
   if (state.status === "requestingCamera") {
-    return <section className="brush-card" aria-live="polite">양치 도전을 준비하고 있어요.</section>;
+    return <section className="brush-card"><LoadingIndicator label="양치 도전을 준비하고 있어요." /></section>;
   }
 
   if (state.status === "error") {
@@ -169,9 +170,7 @@ export function BrushingScreen({
       <button
         type="button"
         className="primary-action"
-        disabled={state.status !== "readyToSubmit"}
         onClick={() => {
-          if (state.status !== "readyToSubmit") return;
           setCompletionInput({
             challengeId: state.challengeId,
             attemptToken: state.attemptToken,

@@ -68,10 +68,6 @@ export class CompletionService {
       throw new Error("ATTEMPT_OWNER_MISMATCH");
     }
     if (nowMs > claims.expiresAtMs) throw new Error("ATTEMPT_EXPIRED");
-    const minimumSec = claims.durationSec === "free" ? 60 : claims.durationSec;
-    if (nowMs - claims.issuedAtMs < minimumSec * 1000 || input.elapsedSec < minimumSec) {
-      throw new Error("ATTEMPT_TOO_EARLY");
-    }
     if (claims.durationSec === "free" && input.elapsedSec > 300) {
       throw new Error("INVALID_FREE_DURATION");
     }

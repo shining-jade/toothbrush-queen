@@ -25,6 +25,12 @@ test("student chooses a skin and free brushing records measured time", async ({ 
   await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
   await expect(page.getByText("00:00")).toBeVisible();
+  const stageBox = await page.locator(".brushing-stage").boundingBox();
+  const timerBox = await page.locator(".countdown").boundingBox();
+  expect(stageBox).not.toBeNull();
+  expect(timerBox).not.toBeNull();
+  expect(timerBox!.y).toBeLessThan(stageBox!.y + stageBox!.height * 0.25);
+  expect(timerBox!.x + timerBox!.width).toBeGreaterThan(stageBox!.x + stageBox!.width * 0.7);
   await page.clock.fastForward(60_000);
   await expect(page.getByText("01:00")).toBeVisible();
   await page.getByRole("button", { name: "양치 완료 기록하기" }).click();

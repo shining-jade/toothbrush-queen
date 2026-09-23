@@ -63,20 +63,18 @@ describe("CompletionService", () => {
     faceDetectedSec: null, cameraMode: "timer-only" as const,
   });
 
-  it("rejects completion before the signed duration elapses", () => {
+  it("accepts a fixed-duration completion immediately with the measured time", () => {
     const attemptToken = attempts.issue("stu-1", "ABC123", 60);
-    clock.advanceSeconds(59);
-    expect(() => service.submit(input(attemptToken), "stu-1")).toThrow("ATTEMPT_TOO_EARLY");
+    const result = service.submit({ ...input(attemptToken), elapsedSec: 0 }, "stu-1");
+
+    expect(result.newlyAccepted).toBe(true);
+    expect(repository.listByStudent("stu-1")[0].elapsedSec).toBe(0);
   });
 
-  it("accepts free brushing at 60 seconds but not before", () => {
+  it("accepts free brushing immediately", () => {
     const attemptToken = attempts.issue("stu-1", "ABC123", "free");
-    clock.advanceSeconds(59);
-    expect(() => service.submit({ ...input(attemptToken), elapsedSec: 59 }, "stu-1"))
-      .toThrow("ATTEMPT_TOO_EARLY");
 
-    clock.advanceSeconds(1);
-    expect(service.submit({ ...input(attemptToken), elapsedSec: 60 }, "stu-1").newlyAccepted)
+    expect(service.submit({ ...input(attemptToken), elapsedSec: 0 }, "stu-1").newlyAccepted)
       .toBe(true);
   });
 

@@ -2,6 +2,7 @@
 
 import { useMemo, type FormEvent } from "react";
 
+import { LoadingIndicator } from "@/components/loading-indicator";
 import { StudentDashboard } from "@/features/challenge/student-dashboard";
 import { AppsScriptClient } from "@/lib/api/apps-script-client";
 import { getClientConfig } from "@/lib/config/client-env";
@@ -43,7 +44,11 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
   }
 
   if (state.status === "loading") {
-    return <section className="loading-panel" aria-live="polite">챌린지를 불러오고 있어요.</section>;
+    return (
+      <section className="loading-panel">
+        <LoadingIndicator label="챌린지를 불러오고 있어요." />
+      </section>
+    );
   }
 
   if (state.status === "error") {

@@ -27,7 +27,9 @@ export function ArCameraPreview({
   const videoRef = useRef<HTMLVideoElement>(null);
   const elapsedRef = useRef(elapsedSec);
   const [pose, setPose] = useState<FacePose | null>(null);
-  const [detected, setDetected] = useState(true);
+  const [detected, setDetected] = useState(false);
+  const [hasTrackingResult, setHasTrackingResult] = useState(false);
+  const [hasDetectedFace, setHasDetectedFace] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => { elapsedRef.current = elapsedSec; }, [elapsedSec]);
@@ -40,11 +42,15 @@ export function ArCameraPreview({
     void tracker.start(video, (result) => {
       if (!active) return;
       const visible = result.detected && result.pose !== null;
+      setHasTrackingResult(true);
       clock.update({ nowMs: result.nowMs, visible, documentVisible: !document.hidden });
       setDetected(visible);
       if (result.pose) {
+        setHasDetectedFace(true);
         const mirrored = mirrorPose(result.pose);
         setPose((previous) => smoothFacePose(previous, mirrored));
+      } else {
+        setPose(null);
       }
       onFaceDetectedSecChange(clock.seconds(elapsedRef.current));
     }, () => {
@@ -68,13 +74,19 @@ export function ArCameraPreview({
   return (
     <div className={styles.stage}>
       <CameraPreview ref={videoRef} stream={stream} />
-      {!failed && pose && (
+      {!failed && detected && pose && (
         // A plain image avoids optimizer latency while the overlay moves every frame.
         // eslint-disable-next-line @next/next/no-img-element
         <img data-testid="ar-skin-overlay" className={styles.overlay} src={skin.src} alt="" style={style} />
       )}
       {failed ? <p className={styles.message}>AR 효과 없이 계속 진행해요.</p>
-        : !detected && <p className={styles.message}>얼굴이 화면에 보이도록 해주세요!</p>}
+        : !detected && (
+          <p className={styles.message}>
+            {hasDetectedFace || hasTrackingResult
+              ? "얼굴이 화면에 보이도록 해주세요!"
+              : "얼굴을 인식하고 있어요."}
+          </p>
+        )}
     </div>
   );
 }
