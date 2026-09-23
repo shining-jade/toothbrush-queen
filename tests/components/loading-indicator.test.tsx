@@ -27,4 +27,3 @@ describe("LoadingIndicator", () => {
     expect(screen.queryByRole("progressbar")).toBeNull();
   });
 });
-

@@ -102,4 +102,3 @@
 - [ ] **Step 2: Run** `pnpm test:e2e`. **Expected:** PASS after any required test-first update.
 - [ ] **Step 3: Run** `pnpm verify`. **Expected:** lint, all unit tests, Apps Script build, Next build, and all browser tests pass.
 - [ ] **Step 4: Inspect at 320×568, 390×844, and 430×932, then commit** `test: verify mobile ar readiness flow` if the task changes tests.
-

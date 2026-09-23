@@ -58,4 +58,3 @@ describe("toothbrush-like image change", () => {
     expect(() => detector.reset()).not.toThrow();
   });
 });
-

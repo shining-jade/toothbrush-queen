@@ -34,4 +34,3 @@ describe("boundedOverlayStyle", () => {
     expect(boundedOverlayStyle(pose, calibration, { width: 320, height: 568 }, { width: 0, height: 0 }, 8)).toBeNull();
   });
 });
-

@@ -90,7 +90,6 @@ function createBrowserFrameReader(): FrameReader {
     }
   };
 }
-
 export function createToothbrushLikeDetector({
   readFrame = createBrowserFrameReader(),
   holdMs = 800,
@@ -132,4 +131,3 @@ export function createToothbrushLikeDetector({
     reset,
   };
 }
-
