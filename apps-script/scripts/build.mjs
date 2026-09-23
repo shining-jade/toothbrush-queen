@@ -7,4 +7,7 @@ await build({
   format: "iife",
   platform: "neutral",
   target: "es2020",
+  footer: {
+    js: "function doPost(event) { return globalThis.__brushKingDoPost(event); }",
+  },
 });

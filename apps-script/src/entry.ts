@@ -25,4 +25,4 @@ function doPost(event: GoogleAppsScript.Events.DoPost) {
   return jsonResponse(createProductionRouter()(request));
 }
 
-(globalThis as typeof globalThis & { doPost: typeof doPost }).doPost = doPost;
+(globalThis as typeof globalThis & { __brushKingDoPost: typeof doPost }).__brushKingDoPost = doPost;
