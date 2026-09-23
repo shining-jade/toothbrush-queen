@@ -1,0 +1,35 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.card {
+  display: grid;
+  min-height: 132px;
+  padding: 8px 6px 12px;
+  border: 2px solid #dfe4f1;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  place-items: center;
+}
+
+.card[aria-checked="true"] {
+  border-color: var(--primary);
+  background: #f2f5ff;
+  box-shadow: 0 6px 18px rgb(70 99 190 / 16%);
+}
+
+.preview {
+  position: relative;
+  width: 84px;
+  height: 84px;
+}
+
+.preview img {
+  object-fit: contain;
+}
