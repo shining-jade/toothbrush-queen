@@ -45,7 +45,7 @@ export function ArCameraPreview({
   const [hasDetectedFace, setHasDetectedFace] = useState(false);
   const [failed, setFailed] = useState(false);
   const [stageSize, setStageSize] = useState<PixelSize | null>(null);
-  const [imageSize, setImageSize] = useState<PixelSize | null>(null);
+  const [imageMeasurement, setImageMeasurement] = useState<(PixelSize & { src: string }) | null>(null);
 
   useEffect(() => { elapsedRef.current = elapsedSec; }, [elapsedSec]);
 
@@ -75,8 +75,6 @@ export function ArCameraPreview({
     observer.observe(stage);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => { setImageSize(null); }, [skin.src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -129,6 +127,7 @@ export function ArCameraPreview({
     };
   }, [onFaceDetectedSecChange, tracker]);
 
+  const imageSize = imageMeasurement?.src === skin.src ? imageMeasurement : null;
   const style = pose && stageSize && imageSize
     ? boundedOverlayStyle(pose, skin.calibration, stageSize, imageSize, 8)
     : null;
@@ -145,7 +144,8 @@ export function ArCameraPreview({
           src={skin.src}
           alt=""
           style={style ?? { visibility: "hidden" }}
-          onLoad={(event) => setImageSize({
+          onLoad={(event) => setImageMeasurement({
+            src: skin.src,
             width: event.currentTarget.naturalWidth,
             height: event.currentTarget.naturalHeight,
           })}

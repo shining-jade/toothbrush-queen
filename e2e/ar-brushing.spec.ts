@@ -13,6 +13,35 @@ async function join(page: Page) {
   await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
 }
 
+async function allowSyntheticCamera(page: Page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 640;
+          canvas.height = 480;
+          const context = canvas.getContext("2d");
+          context?.fillRect(0, 0, canvas.width, canvas.height);
+          return canvas.captureStream(5);
+        },
+      },
+    });
+  });
+}
+
+async function joinWithCamera(page: Page) {
+  await allowSyntheticCamera(page);
+  await page.goto("/?challenge=ABC123");
+  await page.getByLabel("학년").fill("2");
+  await page.getByLabel("반").fill("3");
+  await page.getByLabel("번호").fill("12");
+  await page.getByLabel("이름").fill("김민지");
+  await page.getByRole("button", { name: "챌린지 참여하기" }).click();
+  await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
+}
+
 test("student chooses a skin and free brushing records measured time", async ({ page }) => {
   const mock = await mockAppsScript(page, { durationMode: "choice", acceptedDays: 2 });
   await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
@@ -51,5 +80,36 @@ test("last challenge day forces the crown", async ({ page }) => {
   await expect(page.getByRole("radio")).toHaveCount(0);
   if (process.env.CAPTURE_VISUALS === "1") {
     await page.screenshot({ path: "docs/screenshots/ar-crown-final-day.png", fullPage: true });
+  }
+});
+
+test("camera flow reaches 100 percent, permits readiness skip, and fits mobile widths", async ({ page }) => {
+  await mockAppsScript(page, { durationMode: "choice", acceptedDays: 2 });
+  await joinWithCamera(page);
+
+  const preflight = page.getByRole("progressbar", { name: "진행 상황을 확인하고 있어요." });
+  await expect(preflight).toHaveAttribute("aria-valuenow", "100");
+  await page.getByRole("button", { name: "60초" }).click();
+  await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
+  await page.getByRole("button", { name: "확인하고 시작하기" }).click();
+
+  const cameraLoading = page.getByRole("progressbar", { name: "양치 도전을 준비하고 있어요." });
+  await expect(cameraLoading).toHaveAttribute("aria-valuenow", "100");
+  await expect(page.getByRole("button", { name: "인식 없이 시작하기" })).toBeVisible();
+  await page.getByRole("button", { name: "인식 없이 시작하기" }).click();
+  await expect(page.getByText("01:00")).toBeVisible();
+  await expect(page.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
+
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 430, height: 932 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const stage = await page.locator(".brushing-stage").boundingBox();
+    expect(stage).not.toBeNull();
+    expect(stage!.x).toBeGreaterThanOrEqual(0);
+    expect(stage!.x + stage!.width).toBeLessThanOrEqual(viewport.width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
   }
 });
