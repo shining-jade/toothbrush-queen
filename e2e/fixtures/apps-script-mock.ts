@@ -16,12 +16,14 @@ const challenge = {
 
 type MockOptions = {
   acceptedDays?: number;
+  durationMode?: 60 | 180 | "choice";
   loseFirstCompletionResponse?: boolean;
 };
 
 export async function mockAppsScript(page: Page, options: MockOptions = {}) {
   let acceptedDays = options.acceptedDays ?? 0;
   let completionRequests = 0;
+  const completionPayloads: unknown[] = [];
   let hasStudent = false;
 
   const progress = () => ({
@@ -44,9 +46,13 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
     const body = JSON.parse(route.request().postData() ?? "{}") as {
       action?: string;
       auth?: { deviceToken?: string };
+      payload?: Record<string, unknown>;
     };
 
-    if (body.action === "challenge.get") return success(route, challenge);
+    if (body.action === "challenge.get") return success(route, {
+      ...challenge,
+      durationMode: options.durationMode ?? challenge.durationMode,
+    });
     if (body.action === "student.join") {
       hasStudent = true;
       return success(route, {
@@ -64,12 +70,13 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
       return success(route, {
         attemptId: "attempt-1",
         attemptToken: "signed-attempt-token-1234567890",
-        durationSec: 60,
+        durationSec: body.payload?.selectedDurationSec ?? 60,
         issuedAtMs: Date.now(),
       });
     }
     if (body.action === "completion.submit") {
       completionRequests += 1;
+      completionPayloads.push(body.payload);
       if (options.loseFirstCompletionResponse && completionRequests === 1) {
         await route.abort("internetdisconnected");
         return;
@@ -98,6 +105,7 @@ export async function mockAppsScript(page: Page, options: MockOptions = {}) {
 
   return {
     completionRequests: () => completionRequests,
+    completionPayloads: () => completionPayloads,
   };
 }
 
