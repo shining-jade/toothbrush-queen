@@ -1,5 +1,6 @@
 .superpowers/
 .next/
+out/
 node_modules/
 .env*
 !.env.example
@@ -9,3 +10,5 @@ apps-script/dist/
 .clasp-deploy/
 test-results/
 playwright-report/
+
+.vercel

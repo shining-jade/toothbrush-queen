@@ -1,17 +1,24 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
 import { CompletionScreen } from "@/features/completion/completion-screen";
 
 import styles from "./completion.module.css";
 
-type CompletionPageProps = {
-  searchParams: Promise<{ challenge?: string | string[] }>;
-};
+function CompletionScreenFromUrl() {
+  const challengeId = useSearchParams().get("challenge") ?? "";
 
-export default async function CompletionPage({ searchParams }: CompletionPageProps) {
-  const params = await searchParams;
-  const challengeId = typeof params.challenge === "string" ? params.challenge : "";
+  return <CompletionScreen challengeId={challengeId} />;
+}
+
+export default function CompletionPage() {
   return (
     <main className={`app-shell ${styles.shell}`}>
-      <CompletionScreen challengeId={challengeId} />
+      <Suspense fallback={null}>
+        <CompletionScreenFromUrl />
+      </Suspense>
     </main>
   );
 }

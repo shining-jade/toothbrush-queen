@@ -7,6 +7,8 @@ export default defineConfig([
   ...nextTypeScript,
   globalIgnores([
     ".next/**",
+    "out/**",
+    ".vercel/**",
     "coverage/**",
     "apps-script/dist/**",
     "public/mediapipe/wasm/**",

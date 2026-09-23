@@ -1,18 +1,24 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
 import { BrushingScreen } from "@/features/brushing-session/brushing-screen";
 
 import styles from "./brush.module.css";
 
-type BrushPageProps = {
-  searchParams: Promise<{ challenge?: string | string[] }>;
-};
+function BrushingScreenFromUrl() {
+  const challengeId = useSearchParams().get("challenge") ?? "";
 
-export default async function BrushPage({ searchParams }: BrushPageProps) {
-  const params = await searchParams;
-  const challengeId = typeof params.challenge === "string" ? params.challenge : "";
+  return <BrushingScreen challengeId={challengeId} />;
+}
 
+export default function BrushPage() {
   return (
     <main className={`app-shell ${styles.shell}`}>
-      <BrushingScreen challengeId={challengeId} />
+      <Suspense fallback={null}>
+        <BrushingScreenFromUrl />
+      </Suspense>
     </main>
   );
 }

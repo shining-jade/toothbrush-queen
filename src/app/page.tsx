@@ -1,22 +1,28 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
 import { StudentEntry } from "@/features/student-session/student-entry";
 
 import styles from "./page.module.css";
 
-type HomePageProps = {
-  searchParams: Promise<{ challenge?: string | string[] }>;
-};
+function StudentEntryFromUrl() {
+  const challengeId = useSearchParams().get("challenge") ?? "";
 
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const params = await searchParams;
-  const challengeId = typeof params.challenge === "string" ? params.challenge : "";
+  return <StudentEntry challengeId={challengeId} />;
+}
 
+export default function HomePage() {
   return (
     <main className="app-shell">
       <header className={`brand-header ${styles.header}`}>
         <span aria-hidden="true">👑</span>
         <h1>양치왕</h1>
       </header>
-      <StudentEntry challengeId={challengeId} />
+      <Suspense fallback={null}>
+        <StudentEntryFromUrl />
+      </Suspense>
     </main>
   );
 }
