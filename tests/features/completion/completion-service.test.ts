@@ -60,4 +60,27 @@ describe("CompletionService", () => {
     expect(store.load("ABC123")).toEqual(input);
     expect(sessionStore.clear).toHaveBeenCalledWith("ABC123");
   });
+
+  it("keeps the same envelope when progress refresh fails after server acceptance", async () => {
+    const store = new PendingCompletionStore(localStorage);
+    const api = {
+      submit: vi.fn().mockResolvedValue(successResult),
+      refreshProgress: vi
+        .fn()
+        .mockRejectedValueOnce(new ApiError("NETWORK_UNAVAILABLE", "offline"))
+        .mockResolvedValueOnce({}),
+    };
+    const service = new CompletionService(api, store, { clear: vi.fn() });
+
+    await expect(service.submitOrQueue(input, "device-token")).resolves.toEqual({
+      status: "pending",
+    });
+    expect(store.load("ABC123")).toEqual(input);
+
+    await expect(service.retryPending("ABC123", "device-token")).resolves.toMatchObject({
+      status: "submitted",
+    });
+    expect(api.submit.mock.calls[1][0].idempotencyKey).toBe(input.idempotencyKey);
+    expect(store.load("ABC123")).toBeNull();
+  });
 });

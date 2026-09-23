@@ -53,8 +53,8 @@ export class CompletionService {
       const result = CompletionResultSchema.parse(
         await this.api.submit(input, deviceToken),
       );
-      this.store.clear(input.challengeId);
       await this.api.refreshProgress(input.challengeId, deviceToken);
+      this.store.clear(input.challengeId);
       return { status: "submitted", result };
     } catch (error) {
       if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
