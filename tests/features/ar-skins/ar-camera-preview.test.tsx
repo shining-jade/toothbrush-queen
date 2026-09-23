@@ -137,7 +137,7 @@ describe("ArCameraPreview", () => {
     const remote = mergeSkinCatalog([{
       skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png",
       anchorX: 0.1, anchorY: -0.4, scale: 1.5, rotationOffset: 10, version: 1, sortOrder: 1,
-    }])[3];
+    }]).find((skin) => skin.id === "skin-flower-1")!;
     render(<ArCameraPreview stream={{} as MediaStream} skin={remote} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
     await act(async () => undefined);
     act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 5 }, nowMs: 100 }));

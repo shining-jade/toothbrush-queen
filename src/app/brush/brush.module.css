@@ -145,6 +145,12 @@
   text-align: center;
 }
 
+:global(.skin-choice-card h1) {
+  font-size: clamp(1.55rem, 7.5vw, 2rem);
+  line-height: 1.3;
+  word-break: keep-all;
+}
+
 :global(.crown-choice) {
   display: grid;
   justify-items: center;

@@ -5,16 +5,19 @@ import { SkinSelector } from "@/features/ar-skins/skin-selector";
 import { mergeSkinCatalog } from "@/features/ar-skins/skin-registry";
 
 describe("SkinSelector", () => {
-  it("lets the student choose one of three basic skins", () => {
+  it("lets the student choose from the expanded bundled skin collection", () => {
     const onChange = vi.fn();
     render(<SkinSelector skins={mergeSkinCatalog()} value="cat" onChange={onChange} />);
 
-    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    expect(screen.getAllByRole("radio")).toHaveLength(15);
     expect(screen.getByRole("radio", { name: "냥냥 볼터치" })).toBeChecked();
 
-    fireEvent.click(screen.getByRole("radio", { name: "반짝 토끼" }));
+    fireEvent.click(screen.getByRole("radio", { name: "몽글 거품 왕관" }));
 
-    expect(onChange).toHaveBeenCalledWith("rabbit");
+    expect(onChange).toHaveBeenCalledWith("bubble-crown");
+
+    fireEvent.click(screen.getByRole("radio", { name: "복슬 강아지" }));
+    expect(onChange).toHaveBeenCalledWith("puppy-hood");
   });
 
   it("offers a remote skin and removes only that option when its image fails", () => {

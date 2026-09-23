@@ -54,7 +54,7 @@ async function reachPrivacyNotice(
 ) {
   const view = render(<BrushingScreen challengeId="ABC123" services={testServices.value} completionServices={completionServices} />);
   fireEvent.click(await screen.findByRole("button", { name: mode }));
-  expect(screen.getAllByRole("radio")).toHaveLength(3);
+  expect(screen.getAllByRole("radio")).toHaveLength(15);
   fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
   return view;
 }
@@ -115,7 +115,7 @@ describe("BrushingScreen", () => {
     expect(screen.getByLabelText("내 얼굴 카메라 미리보기")).toBeVisible();
   });
 
-  it("loads progress before exposing camera permission and offers three skins", async () => {
+  it("loads progress before exposing camera permission and offers the bundled skin collection", async () => {
     const testServices = services();
     await reachPrivacyNotice(testServices);
     expect(screen.getByText("카메라 사용 안내")).toBeVisible();

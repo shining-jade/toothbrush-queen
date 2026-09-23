@@ -7,17 +7,30 @@ import {
 } from "@/features/ar-skins/skin-registry";
 
 describe("AR skin registry", () => {
-  it("appends active remote skins after the three bundled fallbacks", () => {
+  it("appends active remote skins after the bundled skin collection", () => {
     const catalog = mergeSkinCatalog([{
       skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png",
       anchorX: 0.1, anchorY: -0.4, scale: 1.5, rotationOffset: 10, version: 1, sortOrder: 10,
     }]);
-    expect(catalog.map((skin) => skin.id)).toEqual(["cat", "rabbit", "bear", "skin-flower-1"]);
-    expect(catalog[3]).toMatchObject({ label: "꽃님 사진관", bundled: false, calibration: { scale: 1.5 } });
+    expect(catalog.map((skin) => skin.id)).toEqual([
+      "cat", "rabbit", "bear",
+      "bubble-crown", "toothpaste-hat", "detective-glasses",
+      "tooth-fairy", "frog-hood", "photo-booth",
+      "puppy-hood", "hamster-hood", "fox-hood",
+      "panda-hood", "chick-hat", "penguin-hood",
+      "skin-flower-1",
+    ]);
+    expect(catalog[15]).toMatchObject({ label: "꽃님 사진관", bundled: false, calibration: { scale: 1.5 } });
   });
 
-  it("offers the three basic animal skins in display order", () => {
-    expect(BASIC_SKINS.map((skin) => skin.id)).toEqual(["cat", "rabbit", "bear"]);
+  it("offers animal and original brushing-themed skins in display order", () => {
+    expect(BASIC_SKINS.map((skin) => skin.id)).toEqual([
+      "cat", "rabbit", "bear",
+      "bubble-crown", "toothpaste-hat", "detective-glasses",
+      "tooth-fairy", "frog-hood", "photo-booth",
+      "puppy-hood", "hamster-hood", "fox-hood",
+      "panda-hood", "chick-hat", "penguin-hood",
+    ]);
   });
 
   it("keeps the student's choice before the final challenge day", () => {
