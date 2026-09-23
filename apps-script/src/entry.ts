@@ -2,6 +2,8 @@ type AppsScriptTextOutput = {
   setMimeType(mimeType: string): AppsScriptTextOutput;
 };
 
+import { createProductionRouter } from "./router";
+
 declare const ContentService: {
   MimeType: { JSON: string };
   createTextOutput(content: string): AppsScriptTextOutput;
@@ -13,11 +15,14 @@ function jsonResponse(payload: unknown) {
   );
 }
 
-function doPost() {
-  return jsonResponse({
-    ok: false,
-    error: { code: "NOT_IMPLEMENTED", message: "API route is not available." },
-  });
+function doPost(event: GoogleAppsScript.Events.DoPost) {
+  let request: unknown;
+  try {
+    request = JSON.parse(event.postData?.contents ?? "");
+  } catch {
+    request = null;
+  }
+  return jsonResponse(createProductionRouter()(request));
 }
 
 (globalThis as typeof globalThis & { doPost: typeof doPost }).doPost = doPost;
