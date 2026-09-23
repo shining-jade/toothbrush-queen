@@ -11,6 +11,61 @@ export const BrushingModeSchema = z.union([
 export const ChallengeIdSchema = z.string().regex(/^[A-Z0-9]{6,24}$/);
 export const DeviceTokenSchema = z.string().min(20).max(256);
 
+export const PublicSkinSchema = z.object({
+  skinId: z.string().regex(/^skin-[a-z0-9-]{3,48}$/),
+  name: z.string().trim().min(1).max(40),
+  imageUrl: z.string().url().refine((url) => url.startsWith("https://")),
+  anchorX: z.number().min(-1).max(1),
+  anchorY: z.number().min(-1).max(1),
+  scale: z.number().min(0.2).max(3),
+  rotationOffset: z.number().min(-180).max(180),
+  version: z.number().int().positive(),
+  sortOrder: z.number().int().min(0).max(10_000),
+}).strict();
+
+export const AdminLoginInputSchema = z.object({
+  password: z.string().min(8).max(256),
+}).strict();
+export const AdminLoginResultSchema = z.object({
+  adminToken: z.string().min(32),
+  expiresAtMs: z.number().int().positive(),
+}).strict();
+export const AdminSessionResultSchema = z.object({
+  valid: z.literal(true),
+  expiresAtMs: z.number().int().positive(),
+}).strict();
+export const AdminAssetUploadInputSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  fileName: z.string().trim().min(1).max(120),
+  mimeType: z.enum(["image/png", "image/webp"]),
+  byteSize: z.number().int().positive().max(2 * 1024 * 1024),
+  base64: z.string().min(4),
+}).strict();
+export const AdminAssetUploadResultSchema = z.object({
+  assetId: z.string().min(1).max(64),
+  publicUrl: z.string().url(),
+}).strict();
+export const AdminSkinDraftSchema = z.object({
+  assetId: z.string().min(1).max(64),
+  name: z.string().trim().min(1).max(40),
+  anchorX: z.number().min(-1).max(1),
+  anchorY: z.number().min(-1).max(1),
+  scale: z.number().min(0.2).max(3),
+  rotationOffset: z.number().min(-180).max(180),
+  enabled: z.boolean(),
+  sortOrder: z.number().int().min(0).max(10_000),
+}).strict();
+export const AdminSkinSchema = PublicSkinSchema.extend({
+  assetId: z.string().min(1).max(64),
+  enabled: z.boolean(),
+  updatedAt: z.string().datetime(),
+}).strict();
+export const AdminSkinListResultSchema = z.array(AdminSkinSchema).max(100);
+export const AdminSkinEnabledInputSchema = z.object({
+  skinId: PublicSkinSchema.shape.skinId,
+  enabled: z.boolean(),
+}).strict();
+
 export const ChallengeSchema = z
   .object({
     challengeId: ChallengeIdSchema,
@@ -22,6 +77,7 @@ export const ChallengeSchema = z
     durationMode: z.union([z.literal(60), z.literal(180), z.literal("choice")]),
     dailyLimit: z.number().int().min(1).max(10),
     status: z.enum(["draft", "active", "ended"]),
+    skins: z.array(PublicSkinSchema).max(100).optional(),
   })
   .strict();
 
@@ -113,7 +169,10 @@ export const ApiRequestSchema = z
   .object({
     action: z.string().min(1).max(80),
     auth: z
-      .object({ deviceToken: DeviceTokenSchema.optional() })
+      .object({
+        deviceToken: DeviceTokenSchema.optional(),
+        adminToken: z.string().min(32).max(256).optional(),
+      })
       .strict()
       .optional(),
     payload: z.unknown(),
@@ -133,6 +192,13 @@ export const ApiResponseSchema = z.discriminatedUnion("ok", [
 ]);
 
 export type Challenge = z.infer<typeof ChallengeSchema>;
+export type PublicSkin = z.infer<typeof PublicSkinSchema>;
+export type AdminLoginInput = z.infer<typeof AdminLoginInputSchema>;
+export type AdminLoginResult = z.infer<typeof AdminLoginResultSchema>;
+export type AdminAssetUploadInput = z.infer<typeof AdminAssetUploadInputSchema>;
+export type AdminAssetUploadResult = z.infer<typeof AdminAssetUploadResultSchema>;
+export type AdminSkinDraft = z.infer<typeof AdminSkinDraftSchema>;
+export type AdminSkin = z.infer<typeof AdminSkinSchema>;
 export type StudentProgress = z.infer<typeof StudentProgressSchema>;
 export type JoinStudentInput = z.infer<typeof JoinStudentInputSchema>;
 export type SessionResumeInput = z.infer<typeof SessionResumeInputSchema>;

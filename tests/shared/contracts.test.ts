@@ -1,14 +1,40 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AdminAssetUploadInputSchema,
+  AdminSkinDraftSchema,
+  ApiRequestSchema,
   ChallengeSchema,
   JoinStudentInputSchema,
+  PublicSkinSchema,
   StartAttemptInputSchema,
   StudentProgressSchema,
   SubmitCompletionInputSchema,
 } from "@/shared/contracts";
 
 describe("API contracts", () => {
+  it("accepts calibrated public skins and administrator authentication", () => {
+    expect(PublicSkinSchema.parse({
+      skinId: "skin-flower-1", name: "꽃님 사진관",
+      imageUrl: "https://drive.google.com/uc?id=file-1",
+      anchorX: 0, anchorY: -0.42, scale: 1.4, rotationOffset: 0,
+      version: 1, sortOrder: 10,
+    })).toMatchObject({ skinId: "skin-flower-1", scale: 1.4 });
+    expect(ApiRequestSchema.parse({
+      action: "admin.skin.list", auth: { adminToken: "a".repeat(32) }, payload: {},
+    })).toMatchObject({ auth: { adminToken: "a".repeat(32) } });
+  });
+
+  it("rejects unsupported administrator assets and unsafe calibration", () => {
+    expect(() => AdminAssetUploadInputSchema.parse({
+      name: "bad", fileName: "bad.svg", mimeType: "image/svg+xml",
+      byteSize: 20, base64: "PHN2Zz4=",
+    })).toThrow();
+    expect(AdminSkinDraftSchema.safeParse({
+      assetId: "asset-1", name: "huge", anchorX: 0, anchorY: 0,
+      scale: 4, rotationOffset: 0, enabled: false, sortOrder: 1,
+    }).success).toBe(false);
+  });
   it("normalizes student fields but preserves the display name", () => {
     const parsed = JoinStudentInputSchema.parse({
       challengeId: "ABC123",

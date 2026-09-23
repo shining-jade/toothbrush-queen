@@ -6,6 +6,7 @@ import { ApiError } from "./api-error";
 
 type RequestOptions = {
   deviceToken?: string;
+  adminToken?: string;
 };
 
 export class AppsScriptClient {
@@ -23,8 +24,11 @@ export class AppsScriptClient {
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action,
-          auth: options.deviceToken
-            ? { deviceToken: options.deviceToken }
+          auth: options.deviceToken || options.adminToken
+            ? {
+              deviceToken: options.deviceToken,
+              adminToken: options.adminToken,
+            }
             : undefined,
           payload,
         }),

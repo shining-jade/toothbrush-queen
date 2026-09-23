@@ -49,4 +49,17 @@ describe("AppsScriptClient", () => {
       new ApiError("NETWORK_UNAVAILABLE", "네트워크 연결을 확인해 주세요."),
     );
   });
+
+  it("attaches an administrator token without exposing it elsewhere", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, data: challenge })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new AppsScriptClient("https://script.google.com/macros/s/example/exec");
+    await client.request("admin.skin.list", {}, ChallengeSchema, {
+      adminToken: "secret-admin-token-value-1234567890",
+    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.auth).toEqual({ adminToken: "secret-admin-token-value-1234567890" });
+  });
 });
