@@ -71,6 +71,7 @@ test("student chooses a skin and free brushing records measured time", async ({ 
 
 test("last challenge day forces the crown", async ({ page }) => {
   await mockAppsScript(page, { durationMode: "choice", acceptedDays: 4 });
+  await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
   await join(page);
   await page.getByRole("button", { name: "60초" }).click();
   await expect(page.getByText("마지막 도전! 양치왕 왕관이 자동으로 적용돼요.")).toBeVisible();
@@ -81,6 +82,17 @@ test("last challenge day forces the crown", async ({ page }) => {
   if (process.env.CAPTURE_VISUALS === "1") {
     await page.screenshot({ path: "docs/screenshots/ar-crown-final-day.png", fullPage: true });
   }
+  await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
+  await page.getByRole("button", { name: "확인하고 시작하기" }).click();
+  await page.clock.fastForward(60_000);
+  await page.getByRole("button", { name: "양치 완료 기록하기" }).click();
+  await page.getByRole("button", { name: "챌린지 완료하고 제출하기" }).click();
+  await expect(page.getByRole("heading", { name: "완주 소감을 남겨주세요" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "홈으로 돌아가기" })).toBeHidden();
+  await page.getByLabel("완주 소감").fill("매일 양치하는 습관이 생겼어요.");
+  await page.getByRole("button", { name: "소감 제출하기" }).click();
+  await expect(page.getByText("소감을 한 번만 안전하게 저장했어요.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "홈으로 돌아가기" })).toBeVisible();
 });
 
 test("camera flow reaches 100 percent, permits readiness skip, and fits mobile widths", async ({ page }) => {

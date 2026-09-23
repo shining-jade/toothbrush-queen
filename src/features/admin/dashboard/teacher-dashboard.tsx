@@ -10,10 +10,13 @@ import { AdminSessionStore } from "@/lib/admin/admin-session-store";
 import { getClientConfig } from "@/lib/config/client-env";
 import {
   AdminDashboardResultSchema,
+  AdminStudentDeleteResultSchema,
   ChallengeSchema,
   type AdminChallengeSaveInput,
   type AdminDashboardResult,
   type Challenge,
+  type AdminStudentSummary,
+  type AdminStudentDeleteResult,
 } from "@/shared/contracts";
 
 import { ChallengeSettingsForm } from "./challenge-settings-form";
@@ -26,6 +29,7 @@ export type TeacherDashboardServices = {
   getToken: () => string | null;
   loadDashboard: (token: string, challengeId: string) => Promise<AdminDashboardResult>;
   saveChallenge: (token: string, input: AdminChallengeSaveInput) => Promise<Challenge>;
+  deleteStudent: (token: string, challengeId: string, studentId: string) => Promise<AdminStudentDeleteResult>;
   navigate: (path: string) => void;
 };
 
@@ -39,6 +43,12 @@ function browserServices(): TeacherDashboardServices {
     saveChallenge: (token, input) => client.request(
       "admin.challenge.save", input, ChallengeSchema, { adminToken: token },
     ),
+    deleteStudent: (token, activeChallengeId, studentId) => client.request(
+      "admin.student.delete",
+      { challengeId: activeChallengeId, studentId },
+      AdminStudentDeleteResultSchema,
+      { adminToken: token },
+    ),
     navigate: (path) => window.location.assign(path),
   };
 }
@@ -49,6 +59,7 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingStudentId, setDeletingStudentId] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -95,6 +106,35 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
     }
   }
 
+  async function deleteStudent(student: AdminStudentSummary) {
+    const confirmed = window.confirm(
+      `${student.name} 학생을 삭제할까요?\n\n학생 정보와 도장 기록, 소감, 자동로그인 정보가 모두 영구 삭제됩니다.`,
+    );
+    if (!confirmed) return;
+    const token = activeServices.getToken();
+    if (!token) {
+      activeServices.navigate("/admin?returnTo=/admin/dashboard");
+      return;
+    }
+    setDeletingStudentId(student.studentId);
+    setError("");
+    setMessage("");
+    try {
+      await activeServices.deleteStudent(token, challengeId, student.studentId);
+      const refreshed = await activeServices.loadDashboard(token, challengeId);
+      setDashboard(refreshed);
+      setMessage(`${student.name} 학생과 모든 기록을 삭제했어요.`);
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.code === "ADMIN_SESSION_EXPIRED") {
+        activeServices.navigate("/admin?returnTo=/admin/dashboard");
+      } else {
+        setError(caught instanceof ApiError ? caught.message : "학생 기록을 삭제하지 못했어요.");
+      }
+    } finally {
+      setDeletingStudentId("");
+    }
+  }
+
   if (error && !dashboard) return <main className={styles.shell}><p role="alert" className={styles.error}>{error}</p></main>;
   if (!dashboard) return <main className={styles.loading}><LoadingIndicator label="교사 대시보드를 불러오고 있어요." /></main>;
 
@@ -114,7 +154,11 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
         onSave={(input) => void saveChallenge(input)}
       />
       <ChallengeQr challengeId={dashboard.challenge.challengeId} />
-      <StudentParticipationTable students={dashboard.students} />
+      <StudentParticipationTable
+        students={dashboard.students}
+        deletingStudentId={deletingStudentId}
+        onDelete={(student) => void deleteStudent(student)}
+      />
     </main>
   );
 }

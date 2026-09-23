@@ -14,6 +14,9 @@ describe("StudentParticipationTable", () => {
   it("filters independently by grade, class, status, and student search", () => {
     render(<StudentParticipationTable students={students} />);
 
+    expect(screen.getByRole("columnheader", { name: "스탬프 횟수" })).toBeVisible();
+    expect(screen.getByText("스탬프 3 / 5개")).toBeVisible();
+
     fireEvent.change(screen.getByLabelText("학년 필터"), { target: { value: "2" } });
     fireEvent.change(screen.getByLabelText("반 필터"), { target: { value: "3" } });
     expect(screen.getByText("김민지")).toBeVisible();

@@ -21,6 +21,7 @@ const successResult: CompletionResult = {
   acceptedDays: 3,
   targetDays: 5,
   newlyAccepted: true,
+  reflectionRequired: false,
 };
 
 describe("CompletionService", () => {

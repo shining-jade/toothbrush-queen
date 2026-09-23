@@ -6,7 +6,7 @@ import type { StudentSessionServices } from "@/features/student-session/use-stud
 
 const challenge = {
   challengeId: "ABC123",
-  name: "5일 양치왕 챌린지",
+  name: "양치의 여왕 챌린지",
   startDate: "2026-09-20",
   endDate: "2026-09-30",
   targetDays: 5,
@@ -84,6 +84,7 @@ describe("StudentEntry", () => {
   it("shows the four required fields when no valid token exists", async () => {
     render(<StudentEntry challengeId="ABC123" services={services(null)} />);
 
+    expect(await screen.findByText("양치의 여왕 챌린지")).toBeVisible();
     for (const label of ["학년", "반", "번호", "이름"]) {
       expect(await screen.findByLabelText(label)).toBeVisible();
     }

@@ -31,4 +31,11 @@ export class InMemorySheetGateway implements SheetGateway {
     rows[dataIndex] = [...row];
     this.tables.set(tab, rows);
   }
+
+  deleteWhere(tab: SheetTab, predicate: (row: unknown[]) => boolean) {
+    const rows = this.tables.get(tab) ?? [];
+    const remaining = rows.filter((row) => !predicate([...row]));
+    this.tables.set(tab, remaining);
+    return rows.length - remaining.length;
+  }
 }

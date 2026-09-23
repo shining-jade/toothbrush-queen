@@ -3,6 +3,8 @@ import type {
   CompletionResult,
   StartAttemptInput,
   StartAttemptResult,
+  SubmitReflectionInput,
+  ReflectionResult,
   SubmitCompletionInput,
 } from "../../../src/shared/contracts";
 import type { ExclusiveLock } from "../platform/lock";
@@ -56,6 +58,28 @@ export class CompletionService {
     });
   }
 
+  submitReflection(input: SubmitReflectionInput, studentId: string): ReflectionResult {
+    return this.lock.runExclusive(() => {
+      const challenge = this.challenges.findById(input.challengeId);
+      if (!challenge) throw new Error("CHALLENGE_NOT_FOUND");
+      const accepted = this.completions.listByStudent(studentId)
+        .filter((row) => row.challengeId === input.challengeId && row.completed && row.stampGranted);
+      const acceptedDays = new Set(accepted.map((row) => row.participationDate)).size;
+      if (acceptedDays < challenge.targetDays) throw new Error("REFLECTION_NOT_AVAILABLE");
+      const finalCompletion = accepted.at(-1);
+      if (!finalCompletion) throw new Error("REFLECTION_NOT_AVAILABLE");
+      const reflection = input.reflection.trim();
+      if (finalCompletion.reflection?.trim()) {
+        if (finalCompletion.reflection.trim() === reflection) {
+          return { submitted: true, challengeId: input.challengeId };
+        }
+        throw new Error("REFLECTION_ALREADY_SUBMITTED");
+      }
+      this.completions.updateReflection(finalCompletion.completionId, reflection);
+      return { submitted: true, challengeId: input.challengeId };
+    });
+  }
+
   private requireChallenge(challengeId: string): Challenge {
     const challenge = this.challenges.findById(challengeId);
     if (!challenge || challenge.status !== "active") throw new Error("CHALLENGE_NOT_ACTIVE");
@@ -77,15 +101,15 @@ export class CompletionService {
   }
 
   private toResult(row: CompletionRow, challenge: Challenge): CompletionResult {
-    const acceptedDays = new Set(
-      this.completions.listByStudent(row.studentId)
-        .filter((completion) => completion.completed && completion.stampGranted)
-        .map((completion) => completion.participationDate),
-    ).size;
+    const accepted = this.completions.listByStudent(row.studentId)
+      .filter((completion) => completion.completed && completion.stampGranted);
+    const acceptedDays = new Set(accepted.map((completion) => completion.participationDate)).size;
+    const reflectionSubmitted = accepted.some((completion) => Boolean(completion.reflection?.trim()));
     return {
       completionId: row.completionId, challengeId: row.challengeId,
       participationDate: row.participationDate, acceptedDays,
       targetDays: challenge.targetDays, newlyAccepted: row.stampGranted,
+      reflectionRequired: acceptedDays >= challenge.targetDays && !reflectionSubmitted,
     };
   }
 }

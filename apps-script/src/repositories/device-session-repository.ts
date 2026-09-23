@@ -26,4 +26,14 @@ export class DeviceSessionRepository {
     const row = this.gateway.readAll("DeviceSessions").find((candidate) => String(candidate[0]) === tokenHash);
     return row ? fromRow(row) : null;
   }
+
+  listByStudent(studentId: string) {
+    return this.gateway.readAll("DeviceSessions")
+      .filter((row) => String(row[1]) === studentId)
+      .map(fromRow);
+  }
+
+  deleteByStudent(studentId: string) {
+    return this.gateway.deleteWhere("DeviceSessions", (row) => String(row[1]) === studentId);
+  }
 }

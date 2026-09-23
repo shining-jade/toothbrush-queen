@@ -60,4 +60,8 @@ export class StudentRepository {
     );
     return row ? fromRow(row) : null;
   }
+
+  deleteById(studentId: string) {
+    return this.gateway.deleteWhere("Students", (row) => String(row[0]) === studentId);
+  }
 }

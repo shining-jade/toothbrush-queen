@@ -67,4 +67,17 @@ export class CompletionRepository {
       row.participationDate === participationDate && row.completed && row.stampGranted,
     );
   }
+
+  deleteByStudent(studentId: string) {
+    return this.gateway.deleteWhere("Completions", (row) => String(row[3]) === studentId);
+  }
+
+  updateReflection(completionId: string, reflection: string) {
+    const rows = this.gateway.readAll("Completions");
+    const dataIndex = rows.findIndex((row) => String(row[0]) === completionId);
+    if (dataIndex < 0) throw new Error("COMPLETION_NOT_FOUND");
+    const updated = { ...fromRow(rows[dataIndex]), reflection };
+    this.gateway.update("Completions", dataIndex + 2, toRow(updated));
+    return updated;
+  }
 }

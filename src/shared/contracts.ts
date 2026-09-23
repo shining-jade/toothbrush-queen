@@ -71,6 +71,15 @@ export const AdminDashboardInputSchema = z.object({
   challengeId: ChallengeIdSchema,
 }).strict();
 
+export const AdminStudentDeleteInputSchema = z.object({
+  challengeId: ChallengeIdSchema,
+  studentId: z.string().min(1).max(64),
+}).strict();
+
+export const AdminStudentDeleteResultSchema = AdminStudentDeleteInputSchema.extend({
+  deleted: z.literal(true),
+}).strict();
+
 export const AdminChallengeSaveInputSchema = z.object({
   challengeId: ChallengeIdSchema,
   name: z.string().trim().min(1).max(80),
@@ -166,6 +175,11 @@ export const SubmitCompletionInputSchema = z
   })
   .strict();
 
+export const SubmitReflectionInputSchema = z.object({
+  challengeId: ChallengeIdSchema,
+  reflection: z.string().trim().min(1).max(500),
+}).strict();
+
 export const JoinStudentResultSchema = z
   .object({
     deviceToken: DeviceTokenSchema,
@@ -200,8 +214,14 @@ export const CompletionResultSchema = z
     acceptedDays: z.number().int().min(0),
     targetDays: z.number().int().min(1),
     newlyAccepted: z.boolean(),
+    reflectionRequired: z.boolean(),
   })
   .strict();
+
+export const ReflectionResultSchema = z.object({
+  submitted: z.literal(true),
+  challengeId: ChallengeIdSchema,
+}).strict();
 
 export const ApiRequestSchema = z
   .object({
@@ -238,6 +258,8 @@ export type AdminAssetUploadResult = z.infer<typeof AdminAssetUploadResultSchema
 export type AdminSkinDraft = z.infer<typeof AdminSkinDraftSchema>;
 export type AdminSkin = z.infer<typeof AdminSkinSchema>;
 export type AdminDashboardInput = z.infer<typeof AdminDashboardInputSchema>;
+export type AdminStudentDeleteInput = z.infer<typeof AdminStudentDeleteInputSchema>;
+export type AdminStudentDeleteResult = z.infer<typeof AdminStudentDeleteResultSchema>;
 export type AdminChallengeSaveInput = z.infer<typeof AdminChallengeSaveInputSchema>;
 export type AdminStudentSummary = z.infer<typeof AdminStudentSummarySchema>;
 export type AdminDashboardResult = z.infer<typeof AdminDashboardResultSchema>;
@@ -246,9 +268,11 @@ export type JoinStudentInput = z.infer<typeof JoinStudentInputSchema>;
 export type SessionResumeInput = z.infer<typeof SessionResumeInputSchema>;
 export type StartAttemptInput = z.infer<typeof StartAttemptInputSchema>;
 export type SubmitCompletionInput = z.infer<typeof SubmitCompletionInputSchema>;
+export type SubmitReflectionInput = z.infer<typeof SubmitReflectionInputSchema>;
 export type JoinStudentResult = z.infer<typeof JoinStudentResultSchema>;
 export type ResumeStudentResult = z.infer<typeof ResumeStudentResultSchema>;
 export type StartAttemptResult = z.infer<typeof StartAttemptResultSchema>;
 export type CompletionResult = z.infer<typeof CompletionResultSchema>;
+export type ReflectionResult = z.infer<typeof ReflectionResultSchema>;
 export type ApiRequest = z.infer<typeof ApiRequestSchema>;
 export type ApiResponse = z.infer<typeof ApiResponseSchema>;

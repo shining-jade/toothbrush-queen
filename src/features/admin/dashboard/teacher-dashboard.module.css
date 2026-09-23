@@ -83,6 +83,8 @@
 .primaryButton { background: var(--primary); color: white; }
 .primaryButton:disabled { opacity: 0.6; }
 .secondaryButton { border: 1px solid #c7d0e8; background: white; color: var(--foreground); }
+.deleteButton { min-height: 38px; padding: 7px 12px; border: 1px solid #e4a29b; border-radius: 10px; background: #fff5f3; color: #a33125; font-weight: 900; }
+.deleteButton:disabled { cursor: wait; opacity: 0.55; }
 .tableWrap { overflow-x: auto; }
 .tableWrap table { width: 100%; border-collapse: collapse; }
 .tableWrap th,

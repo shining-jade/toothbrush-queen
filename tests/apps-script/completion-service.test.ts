@@ -118,4 +118,39 @@ describe("CompletionService", () => {
     const token = attempts.issue("stu-1", "ABC123", 60);
     expect(SubmitCompletionInputSchema.safeParse({ ...input(token), localDate: "2099-01-01" }).success).toBe(false);
   });
+
+  it("requests one reflection after the final stamp and saves it once", () => {
+    for (const [index, participationDate] of ["2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22"].entries()) {
+      repository.insert({
+        completionId: `prior-${index}`, idempotencyKey: `prior-key-${index}`,
+        challengeId: "ABC123", studentId: "stu-1", participationDate,
+        attemptId: `prior-attempt-${index}`, attemptIndex: 1, selectedDurationSec: 60,
+        elapsedSec: 60, faceDetectedSec: null, cameraMode: "timer-only",
+        completed: true, stampGranted: true, createdAt: clock.now().toISOString(),
+      });
+    }
+    const attemptToken = attempts.issue("stu-1", "ABC123", 60);
+    const completed = service.submit(input(attemptToken), "stu-1");
+
+    expect(completed).toMatchObject({ acceptedDays: 5, reflectionRequired: true });
+    expect(service.submitReflection({
+      challengeId: "ABC123",
+      reflection: "  매일 양치하는 습관이 생겼어요.  ",
+    }, "stu-1")).toEqual({ submitted: true, challengeId: "ABC123" });
+    expect(repository.listByStudent("stu-1").at(-1)?.reflection).toBe("매일 양치하는 습관이 생겼어요.");
+    expect(service.submitReflection({
+      challengeId: "ABC123",
+      reflection: "매일 양치하는 습관이 생겼어요.",
+    }, "stu-1")).toEqual({ submitted: true, challengeId: "ABC123" });
+    expect(() => service.submitReflection({
+      challengeId: "ABC123",
+      reflection: "다른 내용으로 다시 제출해요.",
+    }, "stu-1")).toThrow("REFLECTION_ALREADY_SUBMITTED");
+  });
+
+  it("rejects reflection before the challenge is complete", () => {
+    expect(() => service.submitReflection({
+      challengeId: "ABC123", reflection: "아직 완주하지 않았어요.",
+    }, "stu-1")).toThrow("REFLECTION_NOT_AVAILABLE");
+  });
 });

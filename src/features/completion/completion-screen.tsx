@@ -12,7 +12,10 @@ import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
 import {
   CompletionResultSchema,
+  ReflectionResultSchema,
   type CompletionResult,
+  type ReflectionResult,
+  type SubmitReflectionInput,
   type SubmitCompletionInput,
 } from "@/shared/contracts";
 
@@ -27,6 +30,10 @@ export type CompletionScreenServices = {
   ) => Promise<CompletionOutcome>;
   loadPending: (challengeId: string) => SubmitCompletionInput | null;
   getDeviceToken: (challengeId: string) => string | null;
+  submitReflection: (
+    input: SubmitReflectionInput,
+    deviceToken: string,
+  ) => Promise<ReflectionResult>;
 };
 
 function createBrowserServices(): CompletionScreenServices {
@@ -47,6 +54,12 @@ function createBrowserServices(): CompletionScreenServices {
       service.retryPending(challengeId, deviceToken),
     loadPending: (challengeId) => pendingStore.load(challengeId),
     getDeviceToken: (challengeId) => sessionStore.get(challengeId),
+    submitReflection: (reflectionInput, deviceToken) => client.request(
+      "completion.reflection.submit",
+      reflectionInput,
+      ReflectionResultSchema,
+      { deviceToken },
+    ),
   };
 }
 
@@ -75,6 +88,8 @@ export function CompletionScreen({
       ? { status: "idle" }
       : { status: "pending" },
   );
+  const [reflection, setReflection] = useState("");
+  const [reflectionStatus, setReflectionStatus] = useState<"idle" | "submitting" | "saved" | "error">("idle");
 
   async function handleOutcome(request: () => Promise<CompletionOutcome>) {
     if (state.status === "submitting") return;
@@ -113,6 +128,23 @@ export function CompletionScreen({
     void handleOutcome(() => activeServices.retryPending(activeChallengeId, token));
   }
 
+  async function submitReflection() {
+    const token = deviceToken();
+    if (!token || state.status !== "submitted") return;
+    const normalized = reflection.trim();
+    if (!normalized) return;
+    setReflectionStatus("submitting");
+    try {
+      await activeServices.submitReflection(
+        { challengeId: state.result.challengeId, reflection: normalized },
+        token,
+      );
+      setReflectionStatus("saved");
+    } catch {
+      setReflectionStatus("error");
+    }
+  }
+
   if (state.status === "submitted") {
     return (
       <section className="completion-card">
@@ -131,9 +163,39 @@ export function CompletionScreen({
           targetDays={state.result.targetDays}
           animateLatest={state.result.newlyAccepted}
         />
-        <Link className="primary-action" href={`/?challenge=${encodeURIComponent(state.result.challengeId)}`}>
-          홈으로 돌아가기
-        </Link>
+        {state.result.reflectionRequired && reflectionStatus !== "saved" ? (
+          <div className="reflection-form">
+            <h2>완주 소감을 남겨주세요</h2>
+            <p>모든 스탬프를 채운 뒤 한 번만 작성할 수 있어요.</p>
+            <label>
+              완주 소감
+              <textarea
+                value={reflection}
+                onChange={(event) => setReflection(event.target.value)}
+                maxLength={500}
+                rows={5}
+                required
+                placeholder="양치 챌린지에 참여한 소감을 적어주세요."
+              />
+            </label>
+            {reflectionStatus === "error" && <p role="alert">소감을 저장하지 못했어요. 다시 시도해 주세요.</p>}
+            <button
+              className="primary-action"
+              type="button"
+              disabled={!reflection.trim() || reflectionStatus === "submitting"}
+              onClick={() => void submitReflection()}
+            >
+              {reflectionStatus === "submitting" ? "소감 저장 중" : "소감 제출하기"}
+            </button>
+          </div>
+        ) : (
+          <>
+            {reflectionStatus === "saved" && <p role="status">소감을 한 번만 안전하게 저장했어요.</p>}
+            <Link className="primary-action" href={`/?challenge=${encodeURIComponent(state.result.challengeId)}`}>
+              홈으로 돌아가기
+            </Link>
+          </>
+        )}
       </section>
     );
   }

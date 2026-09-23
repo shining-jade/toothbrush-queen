@@ -2,6 +2,7 @@ import {
   AdminAssetUploadInputSchema,
   AdminChallengeSaveInputSchema,
   AdminDashboardInputSchema,
+  AdminStudentDeleteInputSchema,
   AdminLoginInputSchema,
   AdminSkinDraftSchema,
   AdminSkinEnabledInputSchema,
@@ -9,12 +10,14 @@ import {
   ChallengeIdSchema,
   StartAttemptInputSchema,
   SubmitCompletionInputSchema,
+  SubmitReflectionInputSchema,
   JoinStudentInputSchema,
   SessionResumeInputSchema,
   type ApiResponse,
   type Challenge,
   type JoinStudentResult,
   type CompletionResult,
+  type ReflectionResult,
   type ResumeStudentResult,
   type StartAttemptResult,
   type StudentProgress,
@@ -23,12 +26,14 @@ import {
   type AdminDashboardResult,
   type AdminLoginResult,
   type AdminSkin,
+  type AdminStudentDeleteResult,
 } from "../../src/shared/contracts";
 import { z } from "zod";
 import { AdminAuthService } from "./domain/admin-auth-service";
 import { AdminChallengeService } from "./domain/admin-challenge-service";
 import { AdminDashboardService } from "./domain/admin-dashboard-service";
 import { AdminSkinService } from "./domain/admin-skin-service";
+import { AdminStudentService } from "./domain/admin-student-service";
 import { ProgressService } from "./domain/progress-service";
 import { StudentSessionService } from "./domain/student-session-service";
 import { AppsScriptAttemptCrypto, AttemptTokenService } from "./domain/attempt-token";
@@ -52,6 +57,7 @@ export type RouterServices = {
   getProgress(token: string, challengeId: string): StudentProgress;
   startBrushing(token: string, input: Parameters<CompletionService["start"]>[0]): StartAttemptResult;
   submitCompletion(token: string, input: Parameters<CompletionService["submit"]>[0]): CompletionResult;
+  submitReflection(token: string, input: Parameters<CompletionService["submitReflection"]>[0]): ReflectionResult;
   adminLogin(password: string): AdminLoginResult;
   getAdminSession(token: string): { valid: true; expiresAtMs: number };
   uploadAdminAsset(token: string, input: Parameters<AdminSkinService["uploadAsset"]>[1]): AdminAssetUploadResult;
@@ -60,6 +66,7 @@ export type RouterServices = {
   setAdminSkinEnabled(token: string, skinId: string, enabled: boolean): AdminSkin;
   getAdminDashboard(token: string, challengeId: string): AdminDashboardResult;
   saveAdminChallenge(token: string, input: AdminChallengeSaveInput): Challenge;
+  deleteAdminStudent(token: string, challengeId: string, studentId: string): AdminStudentDeleteResult;
 };
 
 const errorMessages: Record<string, string> = {
@@ -76,6 +83,9 @@ const errorMessages: Record<string, string> = {
   INVALID_IMAGE_EXTENSION: "PNG 또는 WebP 파일을 선택해 주세요.",
   INVALID_IMAGE_SIZE: "이미지는 2MB 이하여야 합니다.",
   INVALID_IMAGE_SIGNATURE: "올바른 이미지 파일이 아닙니다.",
+  STUDENT_NOT_FOUND: "삭제할 학생을 찾을 수 없습니다.",
+  REFLECTION_NOT_AVAILABLE: "챌린지를 완주한 뒤 소감을 작성할 수 있습니다.",
+  REFLECTION_ALREADY_SUBMITTED: "완주 소감은 한 번만 작성할 수 있습니다.",
 };
 
 const EmptyObjectSchema = z.object({}).strict();
@@ -124,6 +134,15 @@ export function createRouter(services: RouterServices) {
           ),
         };
       }
+      if (request.action === "completion.reflection.submit") {
+        return {
+          ok: true,
+          data: services.submitReflection(
+            request.auth?.deviceToken ?? "",
+            SubmitReflectionInputSchema.parse(request.payload),
+          ),
+        };
+      }
       if (request.action === "admin.login") {
         const input = AdminLoginInputSchema.parse(request.payload);
         return { ok: true, data: services.adminLogin(input.password) };
@@ -162,6 +181,12 @@ export function createRouter(services: RouterServices) {
         return { ok: true, data: services.saveAdminChallenge(
           request.auth?.adminToken ?? "",
           AdminChallengeSaveInputSchema.parse(request.payload),
+        ) };
+      }
+      if (request.action === "admin.student.delete") {
+        const input = AdminStudentDeleteInputSchema.parse(request.payload);
+        return { ok: true, data: services.deleteAdminStudent(
+          request.auth?.adminToken ?? "", input.challengeId, input.studentId,
         ) };
       }
       return failure("ACTION_NOT_FOUND");
@@ -216,6 +241,9 @@ export function createProductionRouter() {
     (date, timeZone) => Utilities.formatDate(date, timeZone, "yyyy-MM-dd"),
   );
   const adminChallenges = new AdminChallengeService(adminAuth, challenges, now);
+  const adminStudents = new AdminStudentService(
+    adminAuth, students, completions, sessions, new AppsScriptExclusiveLock(),
+  );
   const attemptTokens = new AttemptTokenService(
     new AppsScriptAttemptCrypto(secret), () => now().getTime(),
     () => `attempt-${security.randomToken().slice(0, 24)}`,
@@ -260,6 +288,9 @@ export function createProductionRouter() {
     submitCompletion(token, input) {
       return completionService.submit(input, authenticatedStudentId(token, input.challengeId));
     },
+    submitReflection(token, input) {
+      return completionService.submitReflection(input, authenticatedStudentId(token, input.challengeId));
+    },
     adminLogin: (password) => adminAuth.login(password),
     getAdminSession(token) {
       adminAuth.requireSession(token);
@@ -271,5 +302,6 @@ export function createProductionRouter() {
     setAdminSkinEnabled: (token, skinId, enabled) => adminSkins.setEnabled(token, skinId, enabled),
     getAdminDashboard: (token, challengeId) => adminDashboard.get(token, challengeId),
     saveAdminChallenge: (token, input) => adminChallenges.save(token, input),
+    deleteAdminStudent: (token, challengeId, studentId) => adminStudents.delete(token, challengeId, studentId),
   });
 }
