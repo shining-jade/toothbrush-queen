@@ -52,10 +52,11 @@ async function reachPrivacyNotice(
   mode = "60초",
   completionServices?: CompletionScreenServices,
 ) {
-  render(<BrushingScreen challengeId="ABC123" services={testServices.value} completionServices={completionServices} />);
+  const view = render(<BrushingScreen challengeId="ABC123" services={testServices.value} completionServices={completionServices} />);
   fireEvent.click(await screen.findByRole("button", { name: mode }));
   expect(screen.getAllByRole("radio")).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+  return view;
 }
 
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
@@ -184,6 +185,29 @@ describe("BrushingScreen", () => {
 
     expect(screen.queryByRole("button", { name: "인식 없이 시작하기" })).toBeNull();
     expect(screen.getByText("01:00")).toBeVisible();
+  });
+
+  it("stops a camera stream that arrives after the screen unmounts", async () => {
+    const testServices = services("camera");
+    const cameraRequest = deferred<{ mode: "camera"; stream: MediaStream }>();
+    const attemptRequest = deferred<{ attemptId: string; attemptToken: string; durationSec: 60; issuedAtMs: number }>();
+    vi.mocked(testServices.value.camera.start).mockReturnValue(cameraRequest.promise);
+    vi.mocked(testServices.value.api.request).mockReturnValue(attemptRequest.promise);
+    const view = await reachPrivacyNotice(testServices);
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    view.unmount();
+    await act(async () => {
+      cameraRequest.resolve({ mode: "camera", stream: {} as MediaStream });
+      attemptRequest.resolve({
+        attemptId: "attempt-1",
+        attemptToken: "signed-attempt-token-1234567890",
+        durationSec: 60,
+        issuedAtMs: 1,
+      });
+    });
+
+    expect(testServices.value.camera.stop).toHaveBeenCalledTimes(2);
   });
 
   it("allows completion immediately while free brushing time keeps counting", async () => {

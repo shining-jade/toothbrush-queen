@@ -137,7 +137,10 @@ export function useBrushingSession(
           return StartAttemptResultSchema.parse(value);
         });
       const [camera, attempt] = await Promise.all([cameraRequest, attemptRequest]);
-      if (operationGeneration.current !== generation) return;
+      if (operationGeneration.current !== generation) {
+        services.camera.stop();
+        return;
+      }
       setState({ status: "requestingCamera", mode, progress: 100 });
       const loadingHoldMs = services.loadingHoldMs ?? 220;
       if (loadingHoldMs > 0) {
