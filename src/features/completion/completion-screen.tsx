@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { CompletionService, type CompletionOutcome } from "@/features/completion/completion-service";
 import { PendingCompletionStore } from "@/features/completion/pending-completion-store";
+import { StampBoard } from "@/features/stamp-board/stamp-board";
 import { AppsScriptClient } from "@/lib/api/apps-script-client";
 import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
@@ -121,6 +122,11 @@ export function CompletionScreen({
             ? "오늘 기록이 새로 인정되었어요."
             : "오늘 기록은 이미 인정되어 있어요."}
         </p>
+        <StampBoard
+          acceptedDays={state.result.acceptedDays}
+          targetDays={state.result.targetDays}
+          animateLatest={state.result.newlyAccepted}
+        />
         <Link className="primary-action" href={`/?challenge=${encodeURIComponent(state.result.challengeId)}`}>
           홈으로 돌아가기
         </Link>

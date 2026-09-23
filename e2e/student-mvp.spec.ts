@@ -24,9 +24,19 @@ test("student joins, completes with camera denied, and resumes progress", async 
   await page.getByRole("button", { name: "양치 완료 기록하기" }).click();
   await page.getByRole("button", { name: "챌린지 완료하고 제출하기" }).click();
   await expect(page.getByRole("heading", { name: "양치 완료!" })).toBeVisible();
+  await expect(page.getByLabel("도장판: 5일 중 1일 완료")).toBeVisible();
+  await expect(page.getByRole("listitem", { name: "1일차 완료" })).toHaveAttribute(
+    "data-fresh",
+    "true",
+  );
 
   await page.goto("/?challenge=ABC123");
   await expect(page.getByText("1 / 5일")).toBeVisible();
+  await expect(page.getByLabel("도장판: 5일 중 1일 완료")).toBeVisible();
+  await expect(page.getByRole("listitem", { name: "1일차 완료" })).not.toHaveAttribute(
+    "data-fresh",
+    "true",
+  );
 });
 
 test("lost completion response retries with one accepted day", async ({ page }) => {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getChallengePhase } from "@/features/challenge/challenge-state";
+import { StampBoard } from "@/features/stamp-board/stamp-board";
 import type { Challenge, StudentProgress } from "@/shared/contracts";
 
 type StudentDashboardProps = {
@@ -29,6 +30,11 @@ export function StudentDashboard({
           {progress.acceptedDays} / {progress.targetDays}
         </progress>
       </div>
+
+      <StampBoard
+        acceptedDays={progress.acceptedDays}
+        targetDays={progress.targetDays}
+      />
 
       {phase === "upcoming" && <p className="status-copy">챌린지가 곧 시작돼요.</p>}
       {phase === "ended" && <p className="status-copy">챌린지가 종료되었어요.</p>}

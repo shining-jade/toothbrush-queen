@@ -78,6 +78,11 @@ describe("CompletionScreen", () => {
     expect(screen.getByRole("heading", { name: "양치 완료!" })).toBeVisible();
     expect(screen.getByText("3 / 5일")).toBeVisible();
     expect(screen.getByText("오늘 기록이 새로 인정되었어요.")).toBeVisible();
+    expect(screen.getByLabelText("도장판: 5일 중 3일 완료")).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "3일차 완료" })).toHaveAttribute(
+      "data-fresh",
+      "true",
+    );
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute(
       "href",
       "/?challenge=ABC123",

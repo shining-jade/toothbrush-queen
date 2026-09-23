@@ -37,6 +37,8 @@ describe("StudentDashboard", () => {
 
     expect(screen.getByRole("heading", { name: "5일 양치왕 챌린지" })).toBeVisible();
     expect(screen.getByText("2 / 5일")).toBeVisible();
+    expect(screen.getByLabelText("도장판: 5일 중 2일 완료")).toBeVisible();
+    expect(screen.getAllByRole("img")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "오늘의 양치 도전하기" })).toHaveAttribute(
       "href",
       "/brush?challenge=ABC123",
