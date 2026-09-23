@@ -48,6 +48,14 @@ export const SHEET_SCHEMAS = {
     "stampGranted",
     "createdAt",
   ],
+  Assets: [
+    "assetId", "assetType", "name", "driveFileId", "publicUrl", "mimeType",
+    "byteSize", "version", "createdAt",
+  ],
+  Skins: [
+    "skinId", "assetId", "anchorX", "anchorY", "scale", "rotationOffset",
+    "enabled", "sortOrder", "updatedAt",
+  ],
 } as const;
 
 export type SheetTab = keyof typeof SHEET_SCHEMAS;
