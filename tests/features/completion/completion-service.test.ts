@@ -31,7 +31,6 @@ describe("CompletionService", () => {
         .fn()
         .mockRejectedValueOnce(new ApiError("NETWORK_UNAVAILABLE", "offline"))
         .mockResolvedValueOnce(successResult),
-      refreshProgress: vi.fn().mockResolvedValue({}),
     };
     const service = new CompletionService(api, store, { clear: vi.fn() });
 
@@ -42,7 +41,6 @@ describe("CompletionService", () => {
 
     expect(api.submit.mock.calls[1][0].idempotencyKey).toBe(input.idempotencyKey);
     expect(store.load(input.challengeId)).toBeNull();
-    expect(api.refreshProgress).toHaveBeenCalledWith("ABC123", "device-token");
   });
 
   it("keeps pending data and clears the device session after expiry", async () => {
@@ -50,7 +48,6 @@ describe("CompletionService", () => {
     const sessionStore = { clear: vi.fn() };
     const api = {
       submit: vi.fn().mockRejectedValue(new ApiError("UNAUTHENTICATED", "expired")),
-      refreshProgress: vi.fn(),
     };
     const service = new CompletionService(api, store, sessionStore);
 
@@ -61,26 +58,17 @@ describe("CompletionService", () => {
     expect(sessionStore.clear).toHaveBeenCalledWith("ABC123");
   });
 
-  it("keeps the same envelope when progress refresh fails after server acceptance", async () => {
+  it("finishes immediately from the accepted submission response", async () => {
     const store = new PendingCompletionStore(localStorage);
     const api = {
       submit: vi.fn().mockResolvedValue(successResult),
-      refreshProgress: vi
-        .fn()
-        .mockRejectedValueOnce(new ApiError("NETWORK_UNAVAILABLE", "offline"))
-        .mockResolvedValueOnce({}),
     };
     const service = new CompletionService(api, store, { clear: vi.fn() });
 
     await expect(service.submitOrQueue(input, "device-token")).resolves.toEqual({
-      status: "pending",
-    });
-    expect(store.load("ABC123")).toEqual(input);
-
-    await expect(service.retryPending("ABC123", "device-token")).resolves.toMatchObject({
       status: "submitted",
+      result: successResult,
     });
-    expect(api.submit.mock.calls[1][0].idempotencyKey).toBe(input.idempotencyKey);
     expect(store.load("ABC123")).toBeNull();
   });
 });

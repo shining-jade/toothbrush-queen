@@ -12,7 +12,6 @@ type CompletionApi = {
     input: SubmitCompletionInput,
     deviceToken: string,
   ) => Promise<CompletionResult>;
-  refreshProgress: (challengeId: string, deviceToken: string) => Promise<unknown>;
 };
 
 export type CompletionOutcome =
@@ -53,7 +52,6 @@ export class CompletionService {
       const result = CompletionResultSchema.parse(
         await this.api.submit(input, deviceToken),
       );
-      await this.api.refreshProgress(input.challengeId, deviceToken);
       this.store.clear(input.challengeId);
       return { status: "submitted", result };
     } catch (error) {

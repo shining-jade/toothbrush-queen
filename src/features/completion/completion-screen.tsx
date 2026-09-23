@@ -12,7 +12,6 @@ import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
 import {
   CompletionResultSchema,
-  StudentProgressSchema,
   type CompletionResult,
   type SubmitCompletionInput,
 } from "@/shared/contracts";
@@ -38,8 +37,6 @@ function createBrowserServices(): CompletionScreenServices {
     {
       submit: (input, deviceToken) =>
         client.request("completion.submit", input, CompletionResultSchema, { deviceToken }),
-      refreshProgress: (challengeId, deviceToken) =>
-        client.request("progress.get", { challengeId }, StudentProgressSchema, { deviceToken }),
     },
     pendingStore,
     sessionStore,
