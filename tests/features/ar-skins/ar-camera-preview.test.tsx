@@ -126,7 +126,7 @@ describe("ArCameraPreview", () => {
     }));
 
     const overlay = loadOverlay();
-    expect(overlay).toHaveStyle({ left: "192px", top: "92.3px", width: "120px" });
+    expect(overlay).toHaveStyle({ left: "192px", top: "156.2px", width: "120px" });
     expect(overlay.getAttribute("style")).toContain("rotate(-8deg)");
     unmount();
     expect(tracker.stop).toHaveBeenCalled();
@@ -144,6 +144,22 @@ describe("ArCameraPreview", () => {
     const overlay = loadOverlay();
     expect(overlay).toHaveStyle({ left: "166.4px", top: "124.96px", width: "96px" });
     expect(overlay.getAttribute("style")).toContain("rotate(5deg)");
+  });
+
+  it("maps face coordinates through a cropped landscape camera on a portrait phone", async () => {
+    const { tracker, emit } = fixture();
+    render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.rabbit} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
+    await act(async () => undefined);
+    const video = screen.getByLabelText("내 얼굴 카메라 미리보기");
+    Object.defineProperties(video, {
+      videoWidth: { configurable: true, value: 640 },
+      videoHeight: { configurable: true, value: 480 },
+    });
+
+    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.5, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
+    const overlay = loadOverlay(1200, 1200);
+
+    expect(overlay).toHaveStyle({ left: "160px", top: "257.115px", width: "227.2px" });
   });
 
   it("keeps the overlay hidden until measured and recomputes it after a mobile resize", async () => {

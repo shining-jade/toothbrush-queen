@@ -7,7 +7,7 @@ import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
 import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 import { FacePresenceClock } from "./face-presence-clock";
-import { mirrorPose, smoothFacePose, type FacePose } from "./face-pose";
+import { mapFacePoseToCover, mirrorPose, smoothFacePose, type FacePose } from "./face-pose";
 import { boundedOverlayStyle, type PixelSize } from "./bounded-overlay";
 import type { ArSkin } from "./skin-registry";
 import styles from "./ar-camera-preview.module.css";
@@ -45,6 +45,7 @@ export function ArCameraPreview({
   const [hasDetectedFace, setHasDetectedFace] = useState(false);
   const [failed, setFailed] = useState(false);
   const [stageSize, setStageSize] = useState<PixelSize | null>(null);
+  const [videoSize, setVideoSize] = useState<PixelSize | null>(null);
   const [imageMeasurement, setImageMeasurement] = useState<(PixelSize & { src: string }) | null>(null);
 
   useEffect(() => { elapsedRef.current = elapsedSec; }, [elapsedSec]);
@@ -90,6 +91,14 @@ export function ArCameraPreview({
       setDetected(visible);
       if (result.pose) {
         setHasDetectedFace(true);
+        const currentVideo = videoRef.current;
+        if (currentVideo?.videoWidth && currentVideo.videoHeight) {
+          setVideoSize((current) => (
+            current?.width === currentVideo.videoWidth && current.height === currentVideo.videoHeight
+              ? current
+              : { width: currentVideo.videoWidth, height: currentVideo.videoHeight }
+          ));
+        }
         const mirrored = mirrorPose(result.pose);
         setPose((previous) => smoothFacePose(previous, mirrored));
       } else {
@@ -128,8 +137,11 @@ export function ArCameraPreview({
   }, [onFaceDetectedSecChange, tracker]);
 
   const imageSize = imageMeasurement?.src === skin.src ? imageMeasurement : null;
-  const style = pose && stageSize && imageSize
-    ? boundedOverlayStyle(pose, skin.calibration, stageSize, imageSize, 8)
+  const displayPose = pose && stageSize && videoSize
+    ? mapFacePoseToCover(pose, stageSize, videoSize)
+    : pose;
+  const style = displayPose && stageSize && imageSize
+    ? boundedOverlayStyle(displayPose, skin.calibration, stageSize, imageSize, 8)
     : null;
 
   return (

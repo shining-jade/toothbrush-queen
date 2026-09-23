@@ -67,7 +67,7 @@ export function boundedOverlayStyle(
     left: px(centerX),
     top: px(centerY),
     width: px(width),
-    transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+    transform: `translate3d(-50%, -50%, 0) rotate(${rotationDeg}deg)`,
     visibility: "visible",
   };
 }

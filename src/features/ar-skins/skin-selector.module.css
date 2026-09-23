@@ -26,8 +26,8 @@
 
 .preview {
   position: relative;
-  width: 84px;
-  height: 84px;
+  width: min(68px, calc(100% - 16px));
+  height: 68px;
 }
 
 .preview img {
