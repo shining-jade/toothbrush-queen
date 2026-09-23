@@ -5,14 +5,15 @@ export type CompletionRow = {
   completionId: string; idempotencyKey: string; challengeId: string; studentId: string;
   participationDate: string; attemptId: string; attemptIndex: number;
   selectedDurationSec: BrushingMode; elapsedSec: number; faceDetectedSec: number | null;
-  cameraMode: "camera" | "timer-only"; completed: boolean; stampGranted: boolean; createdAt: string;
+  cameraMode: "camera" | "timer-only"; completed: boolean; stampGranted: boolean;
+  reflection?: string; createdAt: string;
 };
 
 const toRow = (value: CompletionRow): unknown[] => [
   value.completionId, value.idempotencyKey, value.challengeId, value.studentId,
   value.participationDate, value.attemptId, value.attemptIndex, value.selectedDurationSec,
   value.elapsedSec, value.faceDetectedSec ?? "", value.cameraMode, value.completed,
-  value.stampGranted, value.createdAt,
+  value.stampGranted, value.reflection ?? "", value.createdAt,
 ];
 const parseStoredMode = (value: unknown): BrushingMode => {
   if (value === "free") return "free";
@@ -27,7 +28,8 @@ const fromRow = (row: unknown[]): CompletionRow => ({
   attemptIndex: Number(row[6]), selectedDurationSec: parseStoredMode(row[7]),
   elapsedSec: Number(row[8]), faceDetectedSec: row[9] === "" ? null : Number(row[9]),
   cameraMode: String(row[10]) as CompletionRow["cameraMode"], completed: row[11] === true || row[11] === "TRUE",
-  stampGranted: row[12] === true || row[12] === "TRUE", createdAt: String(row[13]),
+  stampGranted: row[12] === true || row[12] === "TRUE", reflection: String(row[13] ?? ""),
+  createdAt: String(row[14]),
 });
 
 export class CompletionRepository {

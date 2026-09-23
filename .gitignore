@@ -6,5 +6,6 @@ node_modules/
 coverage/
 dist/
 apps-script/dist/
+.clasp-deploy/
 test-results/
 playwright-report/

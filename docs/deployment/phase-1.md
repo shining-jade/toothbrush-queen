@@ -4,14 +4,14 @@
 
 하나의 스프레드시트에 아래 여섯 탭을 만들고, 각 탭의 첫 행에 헤더를 순서대로 입력한다. 이름과 순서가 다르면 서버가 `SHEET_SCHEMA_MISMATCH`로 중단된다.
 
-- `Challenges`: `challengeId`, `name`, `startDate`, `endDate`, `targetDays`, `timeZone`, `durationMode`, `dailyLimit`, `status`, `createdAt`, `updatedAt`
-- `Students`: `studentId`, `challengeId`, `grade`, `classNo`, `studentNo`, `name`, `createdAt`, `updatedAt`, `status`
-- `DeviceSessions`: `tokenHash`, `studentId`, `challengeId`, `createdAt`, `expiresAt`, `lastUsedAt`, `revokedAt`
-- `Completions`: `completionId`, `idempotencyKey`, `challengeId`, `studentId`, `participationDate`, `attemptId`, `attemptIndex`, `selectedDurationSec`, `elapsedSec`, `faceDetectedSec`, `cameraMode`, `completed`, `stampGranted`, `createdAt`
-- `Assets`: `assetId`, `assetType`, `name`, `driveFileId`, `publicUrl`, `mimeType`, `byteSize`, `version`, `createdAt`
-- `Skins`: `skinId`, `assetId`, `anchorX`, `anchorY`, `scale`, `rotationOffset`, `enabled`, `sortOrder`, `updatedAt`
+- `챌린지`: `챌린지ID`, `챌린지명`, `시작일`, `종료일`, `목표일수`, `시간대`, `시간모드`, `일일제한`, `상태`, `생성일시`, `수정일시`
+- `학생`: `학생ID`, `챌린지ID`, `학년`, `반`, `번호`, `이름`, `생성일시`, `수정일시`, `상태`
+- `기기세션`: `토큰해시`, `학생ID`, `챌린지ID`, `생성일시`, `만료일시`, `최종사용일시`, `폐기일시`
+- `완료기록`: `완료ID`, `중복방지키`, `챌린지ID`, `학생ID`, `참여일`, `시도ID`, `시도회차`, `선택시간초`, `실제시간초`, `얼굴인식시간초`, `카메라모드`, `완료여부`, `도장지급여부`, `소감`, `생성일시`
+- `자산`: `자산ID`, `자산유형`, `이름`, `Drive파일ID`, `공개URL`, `파일형식`, `파일크기`, `버전`, `생성일시`
+- `스킨`: `스킨ID`, `자산ID`, `기준점X`, `기준점Y`, `크기`, `회전보정`, `사용여부`, `정렬순서`, `수정일시`
 
-`Challenges`에는 최소 한 행을 넣는다. `challengeId`는 영문 대문자와 숫자 6~24자이며 QR 주소는 `https://웹주소/?challenge=ABC123` 형식이다. 날짜는 `YYYY-MM-DD`, `timeZone`은 `Asia/Seoul`, `status`는 운영 중일 때 `active`로 입력한다.
+`챌린지`에는 최소 한 행을 넣는다. `챌린지ID`는 영문 대문자와 숫자 6~24자이며 QR 주소는 `https://웹주소/?challenge=ABC123` 형식이다. 날짜는 `YYYY-MM-DD`, `시간대`는 `Asia/Seoul`, `상태`는 운영 중일 때 `active`로 입력한다.
 
 ## 2. Apps Script 배포
 
@@ -32,8 +32,8 @@
 5. 웹 앱으로 새 배포한다. 실행 사용자는 소유자, 접근 권한은 QR을 사용할 학생이 로그인 없이 접근 가능한 범위로 설정한다.
 6. 배포 URL을 복사한다. 새 버전을 올릴 때마다 웹 앱 배포를 업데이트한다.
 
-원본 기기 토큰은 Sheets에 저장하지 않는다. `DeviceSessions`에는 해시만 기록되어야 한다.
-업로드 이미지의 Base64와 관리자 토큰·비밀번호는 Sheets나 로그에 남기지 않는다. `Assets`에는 Drive 파일 ID와 공개 URL 등 메타데이터만 저장한다.
+원본 기기 토큰은 Sheets에 저장하지 않는다. `기기세션`에는 해시만 기록되어야 한다.
+업로드 이미지의 Base64와 관리자 토큰·비밀번호는 Sheets나 로그에 남기지 않는다. `자산`에는 Drive 파일 ID와 공개 URL 등 메타데이터만 저장한다.
 
 ## 3. Next.js 배포
 
@@ -48,7 +48,7 @@
 - iPhone Safari에서 카메라 허용 후 60초 양치와 완료 기록을 확인한다.
 - Android Chrome에서 카메라 허용 후 같은 흐름을 확인한다.
 - 두 기기에서 카메라를 거부해도 타이머 전용으로 완료되는지 확인한다.
-- 전송 중 네트워크를 끊었다가 `다시 전송하기`를 눌러 `Completions`에 한 행만 생기는지 확인한다.
+- 전송 중 네트워크를 끊었다가 `다시 전송하기`를 눌러 `완료기록`에 한 행만 생기는지 확인한다.
 - 같은 휴대폰에서 QR을 다시 열어 학생 정보 재입력 없이 진행 일수가 복원되는지 확인한다.
 - 브라우저 네트워크 기록과 애플리케이션 로그에 학생 이름, 원본 기기 토큰, 이미지, 영상, 얼굴 좌표가 없는지 확인한다.
 - Sheets 열에 이미지·영상·얼굴 랜드마크용 필드가 없는지 확인한다.

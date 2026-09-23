@@ -1,4 +1,4 @@
-import { assertSheetHeaders, SHEET_SCHEMAS, type SheetTab } from "../schema";
+import { assertSheetHeaders, SHEET_SCHEMAS, SHEET_TITLES, type SheetTab } from "../schema";
 import type { SheetGateway } from "./sheet-gateway";
 
 export class GoogleSheetGateway implements SheetGateway {
@@ -9,8 +9,8 @@ export class GoogleSheetGateway implements SheetGateway {
   }
 
   private sheet(tab: SheetTab) {
-    const sheet = this.spreadsheet().getSheetByName(tab);
-    if (!sheet) throw new Error(`SHEET_MISSING:${tab}`);
+    const sheet = this.spreadsheet().getSheetByName(SHEET_TITLES[tab]);
+    if (!sheet) throw new Error(`SHEET_MISSING:${SHEET_TITLES[tab]}`);
     const width = SHEET_SCHEMAS[tab].length;
     const headers = sheet.getRange(1, 1, 1, width).getValues()[0];
     assertSheetHeaders(tab, headers);
