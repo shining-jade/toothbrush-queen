@@ -3,6 +3,14 @@ import type { SheetGateway } from "../platform/sheet-gateway";
 
 export type ChallengeRow = Challenge & { createdAt: string; updatedAt: string };
 
+const toDateString = (value: unknown) => {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return String(value);
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const toRow = (value: ChallengeRow): unknown[] => [
   value.challengeId,
   value.name,
@@ -20,8 +28,8 @@ const toRow = (value: ChallengeRow): unknown[] => [
 const fromRow = (row: unknown[]): ChallengeRow => ({
   challengeId: String(row[0]),
   name: String(row[1]),
-  startDate: String(row[2]),
-  endDate: String(row[3]),
+  startDate: toDateString(row[2]),
+  endDate: toDateString(row[3]),
   targetDays: Number(row[4]),
   timeZone: String(row[5]),
   durationMode: row[6] === "choice" ? "choice" : (Number(row[6]) as 60 | 180),

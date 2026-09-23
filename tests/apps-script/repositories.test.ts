@@ -147,6 +147,29 @@ describe("Sheets repositories", () => {
     expect(sessions.findByTokenHash("hash-1")?.studentId).toBe("stu-1");
   });
 
+  it("normalizes Google Sheets date cells to YYYY-MM-DD", () => {
+    const memory = new InMemorySheetGateway();
+    const challenges = new ChallengeRepository(memory);
+    memory.append("Challenges", [
+      "BRUSH5",
+      "5일 양치왕 챌린지",
+      new Date(2026, 8, 23),
+      new Date(2026, 8, 27),
+      5,
+      "Asia/Seoul",
+      "choice",
+      1,
+      "active",
+      "2026-09-23T15:57:00+09:00",
+      "2026-09-23T15:57:00+09:00",
+    ]);
+
+    expect(challenges.findById("BRUSH5")).toMatchObject({
+      startDate: "2026-09-23",
+      endDate: "2026-09-27",
+    });
+  });
+
   it("rejects a sheet whose headers are out of order", () => {
     expect(() => assertSheetHeaders("Students", ["학생ID", "이름"])).toThrow(
       "SHEET_SCHEMA_MISMATCH:Students",
