@@ -1,0 +1,24 @@
+.shell {
+  display: grid;
+  align-content: center;
+}
+
+:global(.completion-card) {
+  display: grid;
+  gap: 18px;
+  padding: 28px 24px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 14px 40px rgb(33 48 88 / 12%);
+  text-align: center;
+}
+
+:global(.completion-card h1),
+:global(.completion-card p) {
+  margin: 0;
+}
+
+:global(.completion-count) {
+  color: var(--primary);
+  font-size: 2rem;
+}

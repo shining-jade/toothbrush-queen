@@ -69,7 +69,18 @@ describe("BrushingScreen", () => {
     vi.useFakeTimers();
     vi.spyOn(performance, "now").mockReturnValue(0);
     const testServices = services();
-    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+    render(
+      <BrushingScreen
+        challengeId="ABC123"
+        services={testServices.value}
+        completionServices={{
+          submitOrQueue: vi.fn(),
+          retryPending: vi.fn(),
+          loadPending: vi.fn(() => null),
+          getDeviceToken: vi.fn(() => "device-token"),
+        }}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "60초" }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" }));
@@ -79,6 +90,10 @@ describe("BrushingScreen", () => {
     vi.spyOn(performance, "now").mockReturnValue(60_000);
     act(() => vi.advanceTimersByTime(60_000));
     expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "양치 완료 기록하기" }));
+    expect(
+      screen.getByRole("button", { name: "챌린지 완료하고 제출하기" }),
+    ).toBeVisible();
   });
 
   it("stops the camera when leaving the screen", async () => {

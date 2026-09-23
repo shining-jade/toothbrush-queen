@@ -1,11 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
+import {
+  CompletionScreen,
+  type CompletionScreenServices,
+} from "@/features/completion/completion-screen";
 import { AppsScriptClient } from "@/lib/api/apps-script-client";
 import { CameraController } from "@/lib/camera/camera-controller";
 import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
+import type { SubmitCompletionInput } from "@/shared/contracts";
 
 import { CameraPreview } from "./camera-preview";
 import {
@@ -26,15 +31,22 @@ function createBrowserServices(): BrushingScreenServices {
 export function BrushingScreen({
   challengeId,
   services,
+  completionServices,
 }: {
   challengeId: string;
   services?: BrushingScreenServices;
+  completionServices?: CompletionScreenServices;
 }) {
+  const [completionInput, setCompletionInput] = useState<SubmitCompletionInput | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
   const { state, chooseDuration, start } = useBrushingSession(
     challengeId,
     activeServices,
   );
+
+  if (completionInput) {
+    return <CompletionScreen input={completionInput} services={completionServices} />;
+  }
 
   if (state.status === "choosing") {
     return (
@@ -84,6 +96,18 @@ export function BrushingScreen({
         type="button"
         className="primary-action"
         disabled={state.status !== "readyToSubmit"}
+        onClick={() => {
+          if (state.status !== "readyToSubmit") return;
+          setCompletionInput({
+            challengeId: state.challengeId,
+            attemptToken: state.attemptToken,
+            idempotencyKey: crypto.randomUUID(),
+            elapsedSec: state.elapsedSec,
+            faceDetectedSec: null,
+            cameraMode: state.cameraMode,
+          });
+          activeServices.camera.stop();
+        }}
       >
         양치 완료 기록하기
       </button>
