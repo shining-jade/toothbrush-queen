@@ -1,5 +1,5 @@
-import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
 import { AR_SKINS, mergeSkinCatalog } from "@/features/ar-skins/skin-registry";
@@ -21,6 +21,38 @@ function fixture() {
     fail: (error: unknown) => emitError?.(error),
   };
 }
+
+let resizeStage: (() => void) | undefined;
+let stageSize = { width: 320, height: 568 };
+
+function loadOverlay(width = 600, height = 300) {
+  const overlay = screen.getByTestId("ar-skin-overlay");
+  Object.defineProperties(overlay, {
+    naturalWidth: { configurable: true, value: width },
+    naturalHeight: { configurable: true, value: height },
+  });
+  fireEvent.load(overlay);
+  return overlay;
+}
+
+beforeEach(() => {
+  stageSize = { width: 320, height: 568 };
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({
+    x: 0, y: 0, top: 0, left: 0, right: stageSize.width, bottom: stageSize.height,
+    width: stageSize.width, height: stageSize.height, toJSON: () => ({}),
+  }));
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(callback: () => void) { resizeStage = callback; }
+    observe() {}
+    disconnect() {}
+  });
+});
+
+afterEach(() => {
+  resizeStage = undefined;
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("ArCameraPreview", () => {
   it("waits for a detected face and hides the skin as soon as the face is lost", async () => {
@@ -44,7 +76,7 @@ describe("ArCameraPreview", () => {
       pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
       nowMs: 100,
     }));
-    expect(screen.getByTestId("ar-skin-overlay")).toBeVisible();
+    expect(loadOverlay()).toBeVisible();
 
     act(() => emit({ detected: false, pose: null, nowMs: 200 }));
     expect(screen.queryByTestId("ar-skin-overlay")).toBeNull();
@@ -92,8 +124,8 @@ describe("ArCameraPreview", () => {
       nowMs: 100,
     }));
 
-    const overlay = screen.getByTestId("ar-skin-overlay");
-    expect(overlay).toHaveStyle({ left: "60%", top: "16.25%", width: "37.5%" });
+    const overlay = loadOverlay();
+    expect(overlay).toHaveStyle({ left: "192px", top: "92.3px", width: "120px" });
     expect(overlay.getAttribute("style")).toContain("rotate(-8deg)");
     unmount();
     expect(tracker.stop).toHaveBeenCalled();
@@ -108,7 +140,24 @@ describe("ArCameraPreview", () => {
     render(<ArCameraPreview stream={{} as MediaStream} skin={remote} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
     await act(async () => undefined);
     act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 5 }, nowMs: 100 }));
-    expect(screen.getByTestId("ar-skin-overlay")).toHaveStyle({ left: "52%", top: "22%", width: "30%" });
-    expect(screen.getByTestId("ar-skin-overlay").getAttribute("style")).toContain("rotate(5deg)");
+    const overlay = loadOverlay();
+    expect(overlay).toHaveStyle({ left: "166.4px", top: "124.96px", width: "96px" });
+    expect(overlay.getAttribute("style")).toContain("rotate(5deg)");
+  });
+
+  it("keeps the overlay hidden until measured and recomputes it after a mobile resize", async () => {
+    const { tracker, emit } = fixture();
+    render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.cat} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
+    await act(async () => undefined);
+    act(() => emit({ detected: true, pose: { centerX: 0.15, centerY: 0.1, width: 0.8, rotationDeg: 0 }, nowMs: 100 }));
+
+    const overlay = screen.getByTestId("ar-skin-overlay");
+    expect(overlay).toHaveStyle({ visibility: "hidden" });
+    loadOverlay();
+    expect(overlay).toHaveStyle({ left: "160px", width: "304px", visibility: "visible" });
+
+    stageSize = { width: 430, height: 932 };
+    act(() => resizeStage?.());
+    expect(overlay).toHaveStyle({ left: "215px", width: "414px" });
   });
 });
