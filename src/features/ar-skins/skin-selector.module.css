@@ -24,6 +24,11 @@
   box-shadow: 0 6px 18px rgb(70 99 190 / 16%);
 }
 
+.card > span:last-child {
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
 .preview {
   position: relative;
   width: min(68px, calc(100% - 16px));
