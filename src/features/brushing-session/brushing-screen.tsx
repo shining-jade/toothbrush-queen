@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { LoadingIndicator } from "@/components/loading-indicator";
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
@@ -25,12 +25,17 @@ import {
 
 import { formatMinutesSeconds } from "./brushing-machine";
 import {
+  createCompletionFeedback,
+  type CompletionFeedback,
+} from "./completion-feedback";
+import {
   useBrushingSession,
   type BrushingSessionServices,
 } from "./use-brushing-session";
 
 export type BrushingScreenServices = BrushingSessionServices & {
   createFaceTracker: () => FaceTracker;
+  completionFeedback: CompletionFeedback;
 };
 
 function createBrowserServices(): BrushingScreenServices {
@@ -48,6 +53,7 @@ function createBrowserServices(): BrushingScreenServices {
       { deviceToken },
     ),
     createFaceTracker: () => createMediaPipeFaceTracker(),
+    completionFeedback: createCompletionFeedback(),
   };
 }
 
@@ -72,6 +78,19 @@ export function BrushingScreen({
   const { state, chooseDuration, confirmSkin, retryPreflight, start } = useBrushingSession(
     challengeId,
     activeServices,
+  );
+  const previousTimerStatus = useRef(state.status);
+
+  useEffect(() => {
+    if (state.status === "readyToSubmit" && previousTimerStatus.current === "running") {
+      activeServices.completionFeedback.signal();
+    }
+    previousTimerStatus.current = state.status;
+  }, [activeServices, state.status]);
+
+  useEffect(
+    () => () => activeServices.completionFeedback.dispose(),
+    [activeServices],
   );
 
   if (completionInput) {
@@ -135,7 +154,10 @@ export function BrushingScreen({
       <section className="brush-card">
         <h1>카메라 사용 안내</h1>
         <p>카메라는 AR 스킨 표시와 챌린지 진행을 위해 사용됩니다. 카메라 영상과 얼굴 이미지는 저장되지 않습니다.</p>
-        <button type="button" className="primary-action" onClick={() => void start()}>
+        <button type="button" className="primary-action" onClick={() => {
+          activeServices.completionFeedback.prime();
+          void start();
+        }}>
           확인하고 시작하기
         </button>
       </section>
@@ -151,7 +173,10 @@ export function BrushingScreen({
   }
 
   return (
-    <section className="brushing-stage">
+    <section
+      className="brushing-stage"
+      data-complete={state.status === "readyToSubmit" ? "true" : undefined}
+    >
       {state.stream ? (
         <ArCameraPreview
           stream={state.stream}
@@ -166,6 +191,12 @@ export function BrushingScreen({
       <div className="countdown" aria-live="polite">
         <strong>{formatMinutesSeconds(state.durationSec === "free" ? state.elapsedSec : state.remainingSec ?? 0)}</strong>
       </div>
+      {state.status === "readyToSubmit" && state.durationSec !== "free" && (
+        <div className="completion-celebration" role="status" aria-label="양치 시간 완료 알림">
+          <strong>✨ 양치 완료! ✨</strong>
+          <span>기록 버튼을 눌러주세요</span>
+        </div>
+      )}
       <p>{state.status === "readyToSubmit" ? "양치 완료!" : "구석구석 꼼꼼하게 양치해요."}</p>
       <button
         type="button"

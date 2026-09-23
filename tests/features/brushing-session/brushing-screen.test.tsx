@@ -25,6 +25,11 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
     getChallenge: vi.fn().mockResolvedValue(challenge),
     getProgress: vi.fn().mockResolvedValue(progress),
     createFaceTracker: vi.fn(() => tracker),
+    completionFeedback: {
+      prime: vi.fn(),
+      signal: vi.fn(),
+      dispose: vi.fn(),
+    },
   };
   return { value, tracker, emit: (result: FaceTrackingResult) => emitResult?.(result) };
 }
@@ -128,6 +133,29 @@ describe("BrushingScreen", () => {
     expect(screen.getByRole("heading", { name: "양치 기록 보내기" })).toBeVisible();
     expect(screen.getByText("총 0분 0초 동안 양치했어요.")).toBeVisible();
     expect(testServices.value.camera.stop).toHaveBeenCalled();
+    expect(testServices.value.completionFeedback.signal).not.toHaveBeenCalled();
+  });
+
+  it("signals once and shows a celebration when a fixed timer reaches zero", async () => {
+    const testServices = services();
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+    await act(async () => undefined);
+    fireEvent.click(screen.getByRole("button", { name: "60초" }));
+    fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+    vi.useFakeTimers();
+    vi.spyOn(performance, "now").mockReturnValue(0);
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    expect(testServices.value.completionFeedback.prime).toHaveBeenCalledOnce();
+
+    vi.spyOn(performance, "now").mockReturnValue(60_000);
+    act(() => vi.advanceTimersByTime(60_000));
+
+    expect(screen.getByRole("status", { name: "양치 시간 완료 알림" })).toBeVisible();
+    expect(testServices.value.completionFeedback.signal).toHaveBeenCalledOnce();
+
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(testServices.value.completionFeedback.signal).toHaveBeenCalledOnce();
   });
 
   it("submits only aggregate face-detected seconds", async () => {
