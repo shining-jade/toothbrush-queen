@@ -20,7 +20,7 @@ export function StudentDashboard({
 
   return (
     <section aria-labelledby="challenge-title" className="challenge-card">
-      <p className="eyebrow">👑 나의 양치 챌린지</p>
+      <p className="eyebrow">🪥 나의 양치 챌린지</p>
       <h2 id="challenge-title">{challenge.name}</h2>
       <p className="student-name">{progress.displayName}</p>
 

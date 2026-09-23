@@ -101,7 +101,7 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
-        <div><p className={styles.eyebrow}>양치왕 교사 모드</p><h1>{dashboard.challenge.name}</h1></div>
+        <div><p className={styles.eyebrow}>양치의 여왕 교사 모드</p><h1>{dashboard.challenge.name}</h1></div>
         <Link className={styles.secondaryButton} href="/admin/skins">AR 스킨 관리</Link>
       </header>
       <DashboardSummary summary={dashboard.summary} />

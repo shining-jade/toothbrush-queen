@@ -12,7 +12,7 @@ describe("ChallengeQr", () => {
       "src", "data:image/png;base64,qr-image",
     );
     expect(createQr).toHaveBeenCalledWith("https://school.example/?challenge=BRUSH5");
-    expect(screen.getByRole("link", { name: "QR 이미지 저장" })).toHaveAttribute("download", "양치왕-BRUSH5-학생용-QR.png");
+    expect(screen.getByRole("link", { name: "QR 이미지 저장" })).toHaveAttribute("download", "양치의-여왕-BRUSH5-학생용-QR.png");
     expect(screen.getByDisplayValue("https://school.example/?challenge=BRUSH5")).toBeVisible();
   });
 });

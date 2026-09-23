@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "양치왕",
+  title: "양치의 여왕",
   description: "즐겁게 이어가는 양치 습관 챌린지",
 };
 

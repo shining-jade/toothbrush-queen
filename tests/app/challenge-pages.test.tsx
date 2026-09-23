@@ -29,6 +29,7 @@ vi.mock("@/features/completion/completion-screen", () => ({
 }));
 
 import HomePage from "@/app/page";
+import { metadata } from "@/app/layout";
 import BrushPage from "@/app/brush/page";
 import CompletionPage from "@/app/completion/page";
 
@@ -58,5 +59,14 @@ describe("정적 학생 페이지의 챌린지 URL 연결", () => {
     render(<Page />);
 
     expect(screen.getByLabelText("학생 챌린지")).toHaveTextContent("없음");
+  });
+
+  it("칫솔 아이콘과 양치의 여왕 브랜드를 표시한다", () => {
+    const Page = asClientPage(HomePage);
+    render(<Page />);
+
+    expect(screen.getByRole("heading", { name: "양치의 여왕" })).toBeVisible();
+    expect(screen.getByText("🪥")).toBeVisible();
+    expect(metadata.title).toBe("양치의 여왕");
   });
 });

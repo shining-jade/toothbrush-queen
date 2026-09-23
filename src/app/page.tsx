@@ -17,8 +17,8 @@ export default function HomePage() {
   return (
     <main className="app-shell">
       <header className={`brand-header ${styles.header}`}>
-        <span aria-hidden="true">👑</span>
-        <h1>양치왕</h1>
+        <span aria-hidden="true">🪥</span>
+        <h1>양치의 여왕</h1>
       </header>
       <Suspense fallback={null}>
         <StudentEntryFromUrl />

@@ -203,7 +203,7 @@ function SkinEditorCore({ services }: { services: SkinEditorServices }) {
 
   return (
     <main className={styles.shell}>
-      <header className={styles.header}><div><span>양치왕 관리자</span><h1>AR 스킨 관리</h1></div><p>PNG·WebP / 최대 2MB</p></header>
+      <header className={styles.header}><div><span>양치의 여왕 관리자</span><h1>AR 스킨 관리</h1></div><p>PNG·WebP / 최대 2MB</p></header>
       <div className={styles.editorGrid}>
         <SkinPreview imageUrl={validated?.previewUrl} calibration={calibration} />
         <section className={styles.formCard} aria-label="스킨 설정">

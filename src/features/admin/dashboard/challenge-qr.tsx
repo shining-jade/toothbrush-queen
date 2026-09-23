@@ -64,7 +64,7 @@ export function ChallengeQr({ challengeId, origin, createQr = defaultCreateQr }:
               <a
                 className={styles.primaryButton}
                 href={qrImage}
-                download={`양치왕-${challengeId}-학생용-QR.png`}
+                download={`양치의-여왕-${challengeId}-학생용-QR.png`}
               >
                 QR 이미지 저장
               </a>

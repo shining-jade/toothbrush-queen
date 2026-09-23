@@ -34,6 +34,7 @@ describe("TeacherDashboard", () => {
     render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
 
     expect(await screen.findByRole("article", { name: "전체 학생" })).toHaveTextContent("4명");
+    expect(screen.getByText("양치의 여왕 교사 모드")).toBeVisible();
     expect(screen.getByRole("article", { name: "오늘 참여" })).toHaveTextContent("2명");
     expect(screen.getByRole("article", { name: "오늘 미참여" })).toHaveTextContent("2명");
     expect(screen.getByRole("article", { name: "완주 학생" })).toHaveTextContent("1명");
