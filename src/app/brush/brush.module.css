@@ -15,7 +15,7 @@
 
 :global(.duration-grid) {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 12px;
 }
 
@@ -71,4 +71,21 @@
 
 :global(.countdown span) {
   margin-left: 4px;
+}
+
+:global(.skin-choice-card) {
+  text-align: center;
+}
+
+:global(.crown-choice) {
+  display: grid;
+  justify-items: center;
+  color: #8b4d00;
+  font-weight: 800;
+}
+
+:global(.crown-choice img) {
+  width: min(180px, 55vw);
+  height: auto;
+  object-fit: contain;
 }

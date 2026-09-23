@@ -71,6 +71,7 @@ export function CompletionScreen({
 }) {
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
   const activeChallengeId = input?.challengeId ?? challengeId ?? "";
+  const [activeInput] = useState(() => input ?? activeServices.loadPending(activeChallengeId));
   const [state, setState] = useState<ViewState>(() =>
     input || !activeServices.loadPending(activeChallengeId)
       ? { status: "idle" }
@@ -87,6 +88,10 @@ export function CompletionScreen({
       setState({ status: "error" });
     }
   }
+
+  const elapsedCopy = activeInput
+    ? `총 ${Math.floor(activeInput.elapsedSec / 60)}분 ${activeInput.elapsedSec % 60}초 동안 양치했어요.`
+    : null;
 
   function deviceToken(): string | null {
     return activeServices.getDeviceToken(activeChallengeId);
@@ -114,6 +119,7 @@ export function CompletionScreen({
     return (
       <section className="completion-card">
         <h1>양치 완료!</h1>
+        {elapsedCopy && <p>{elapsedCopy}</p>}
         <strong className="completion-count">
           {state.result.acceptedDays} / {state.result.targetDays}일
         </strong>
@@ -149,6 +155,7 @@ export function CompletionScreen({
   return (
     <section className="completion-card">
       <h1>양치 기록 보내기</h1>
+      {elapsedCopy && <p>{elapsedCopy}</p>}
       {state.status === "pending" && <p>기록 전송이 보류되었습니다</p>}
       {state.status === "error" && <p role="alert">기록을 전송하지 못했어요.</p>}
       {state.status === "pending" ? (

@@ -2,6 +2,11 @@ import type { BrushingMode } from "@/shared/brushing-mode";
 
 export type BrushingDuration = 60 | 180;
 
+export function formatMinutesSeconds(seconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  return `${String(Math.floor(safeSeconds / 60)).padStart(2, "0")}:${String(safeSeconds % 60).padStart(2, "0")}`;
+}
+
 export function timerState(
   startedAtMs: number,
   nowMs: number,

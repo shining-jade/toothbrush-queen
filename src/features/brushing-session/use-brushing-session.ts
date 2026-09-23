@@ -5,13 +5,15 @@ import type { z } from "zod";
 
 import type { CameraStartResult } from "@/lib/camera/camera-controller";
 import {
+  type Challenge,
   StartAttemptResultSchema,
   type StartAttemptResult,
+  type StudentProgress,
 } from "@/shared/contracts";
+import type { BrushingMode } from "@/shared/brushing-mode";
 
 import {
   createBrushingMachine,
-  type BrushingDuration,
 } from "./brushing-machine";
 
 export type BrushingSessionServices = {
@@ -28,6 +30,8 @@ export type BrushingSessionServices = {
     ) => Promise<unknown>;
   };
   sessionStore: { get: (challengeId: string) => string | null };
+  getChallenge: (challengeId: string) => Promise<Challenge>;
+  getProgress: (challengeId: string, deviceToken: string) => Promise<StudentProgress>;
   now?: () => number;
 };
 
@@ -43,9 +47,12 @@ export type RunningSession = StartAttemptResult & {
 };
 
 export type BrushingSessionState =
-  | { status: "choosing" }
-  | { status: "explaining"; durationSec: BrushingDuration }
-  | { status: "requestingCamera"; durationSec: BrushingDuration }
+  | { status: "loadingProgress" }
+  | { status: "progressError" }
+  | { status: "choosing"; challenge: Challenge; progress: StudentProgress }
+  | { status: "choosingSkin"; mode: BrushingMode; challenge: Challenge; progress: StudentProgress }
+  | { status: "explaining"; mode: BrushingMode }
+  | { status: "requestingCamera"; mode: BrushingMode }
   | ({ status: "running" | "readyToSubmit" } & RunningSession)
   | { status: "error"; message: string };
 
@@ -53,17 +60,42 @@ export function useBrushingSession(
   challengeId: string,
   services: BrushingSessionServices,
 ) {
-  const [state, setState] = useState<BrushingSessionState>({ status: "choosing" });
+  const [state, setState] = useState<BrushingSessionState>({ status: "loadingProgress" });
+  const [preflightAttempt, setPreflightAttempt] = useState(0);
   const now = useCallback(() => services.now?.() ?? performance.now(), [services]);
 
-  const chooseDuration = useCallback((durationSec: BrushingDuration) => {
-    setState({ status: "explaining", durationSec });
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(async () => {
+      const deviceToken = services.sessionStore.get(challengeId);
+      if (!deviceToken) throw new Error("missing device session");
+      const [challenge, progress] = await Promise.all([
+        services.getChallenge(challengeId),
+        services.getProgress(challengeId, deviceToken),
+      ]);
+      if (active) setState({ status: "choosing", challenge, progress });
+    }).catch(() => {
+      if (active) setState({ status: "progressError" });
+    });
+    return () => { active = false; };
+  }, [challengeId, preflightAttempt, services]);
+
+  const chooseDuration = useCallback((mode: BrushingMode) => {
+    setState((current) => current.status === "choosing"
+      ? { status: "choosingSkin", mode, challenge: current.challenge, progress: current.progress }
+      : current);
+  }, []);
+
+  const confirmSkin = useCallback(() => {
+    setState((current) => current.status === "choosingSkin"
+      ? { status: "explaining", mode: current.mode }
+      : current);
   }, []);
 
   const start = useCallback(async () => {
     if (state.status !== "explaining") return;
-    const durationSec = state.durationSec;
-    setState({ status: "requestingCamera", durationSec });
+    const mode = state.mode;
+    setState({ status: "requestingCamera", mode });
     const deviceToken = services.sessionStore.get(challengeId);
     if (!deviceToken) {
       setState({ status: "error", message: "참여 정보를 다시 확인해 주세요." });
@@ -75,7 +107,7 @@ export function useBrushingSession(
       const attempt = StartAttemptResultSchema.parse(
         await services.api.request(
           "brushing.start",
-          { challengeId, selectedDurationSec: durationSec },
+          { challengeId, selectedDurationSec: mode },
           StartAttemptResultSchema,
           { deviceToken },
         ),
@@ -89,7 +121,7 @@ export function useBrushingSession(
         stream: camera.stream,
         startedAtMs: now(),
         elapsedSec: 0,
-        remainingSec: durationSec,
+        remainingSec: attempt.durationSec === "free" ? null : attempt.durationSec,
         hiddenSec: 0,
       });
     } catch {
@@ -151,5 +183,10 @@ export function useBrushingSession(
 
   useEffect(() => () => services.camera.stop(), [services]);
 
-  return { state, chooseDuration, start };
+  const retryPreflight = useCallback(() => {
+    setState({ status: "loadingProgress" });
+    setPreflightAttempt((value) => value + 1);
+  }, []);
+
+  return { state, chooseDuration, confirmSkin, retryPreflight, start };
 }

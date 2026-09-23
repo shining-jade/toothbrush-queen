@@ -1,7 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Image from "next/image";
+import { useCallback, useMemo, useState } from "react";
 
+import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
+import { AR_SKINS, resolveSessionSkin, type BasicSkinId } from "@/features/ar-skins/skin-registry";
+import { SkinSelector } from "@/features/ar-skins/skin-selector";
 import {
   CompletionScreen,
   type CompletionScreenServices,
@@ -10,21 +14,39 @@ import { AppsScriptClient } from "@/lib/api/apps-script-client";
 import { CameraController } from "@/lib/camera/camera-controller";
 import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
-import type { SubmitCompletionInput } from "@/shared/contracts";
+import { createMediaPipeFaceTracker } from "@/lib/face-tracking/mediapipe-face-tracker";
+import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
+import {
+  ChallengeSchema,
+  StudentProgressSchema,
+  type SubmitCompletionInput,
+} from "@/shared/contracts";
 
-import { CameraPreview } from "./camera-preview";
+import { formatMinutesSeconds } from "./brushing-machine";
 import {
   useBrushingSession,
   type BrushingSessionServices,
 } from "./use-brushing-session";
 
-export type BrushingScreenServices = BrushingSessionServices;
+export type BrushingScreenServices = BrushingSessionServices & {
+  createFaceTracker: () => FaceTracker;
+};
 
 function createBrowserServices(): BrushingScreenServices {
+  const client = new AppsScriptClient(getClientConfig().appsScriptUrl);
+  const sessionStore = new DeviceSessionStore();
   return {
     camera: new CameraController(),
-    api: new AppsScriptClient(getClientConfig().appsScriptUrl),
-    sessionStore: new DeviceSessionStore(),
+    api: client,
+    sessionStore,
+    getChallenge: (id) => client.request("challenge.get", { challengeId: id }, ChallengeSchema),
+    getProgress: (id, deviceToken) => client.request(
+      "progress.get",
+      { challengeId: id },
+      StudentProgressSchema,
+      { deviceToken },
+    ),
+    createFaceTracker: () => createMediaPipeFaceTracker(),
   };
 }
 
@@ -38,8 +60,15 @@ export function BrushingScreen({
   completionServices?: CompletionScreenServices;
 }) {
   const [completionInput, setCompletionInput] = useState<SubmitCompletionInput | null>(null);
+  const [selectedSkin, setSelectedSkin] = useState<BasicSkinId>("cat");
+  const [sessionSkin, setSessionSkin] = useState<"cat" | "rabbit" | "bear" | "crown">("cat");
+  const [faceDetectedSec, setFaceDetectedSec] = useState<number | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
-  const { state, chooseDuration, start } = useBrushingSession(
+  const tracker = useMemo(() => activeServices.createFaceTracker(), [activeServices]);
+  const updateFaceDetectedSec = useCallback((seconds: number | null) => {
+    setFaceDetectedSec(seconds);
+  }, []);
+  const { state, chooseDuration, confirmSkin, retryPreflight, start } = useBrushingSession(
     challengeId,
     activeServices,
   );
@@ -48,14 +77,53 @@ export function BrushingScreen({
     return <CompletionScreen input={completionInput} services={completionServices} />;
   }
 
+  if (state.status === "loadingProgress") {
+    return <section className="brush-card" aria-live="polite">진행 상황을 확인하고 있어요.</section>;
+  }
+
+  if (state.status === "progressError") {
+    return (
+      <section className="brush-card" role="alert">
+        <p>진행 상황을 불러오지 못했어요.</p>
+        <button type="button" className="primary-action" onClick={retryPreflight}>다시 시도</button>
+      </section>
+    );
+  }
+
   if (state.status === "choosing") {
+    const choices = state.challenge.durationMode === "choice"
+      ? ([60, 180, "free"] as const)
+      : ([state.challenge.durationMode] as const);
     return (
       <section className="brush-card">
         <h1>오늘은 얼마나 양치할까요?</h1>
         <div className="duration-grid">
-          <button type="button" onClick={() => chooseDuration(60)}>60초</button>
-          <button type="button" onClick={() => chooseDuration(180)}>180초</button>
+          {choices.map((mode) => (
+            <button key={mode} type="button" onClick={() => chooseDuration(mode)}>
+              {mode === "free" ? "자유 양치" : `${mode}초`}
+            </button>
+          ))}
         </div>
+      </section>
+    );
+  }
+
+  if (state.status === "choosingSkin") {
+    const finalDay = state.progress.acceptedDays === state.progress.targetDays - 1;
+    const activeSkin = resolveSessionSkin(selectedSkin, state.progress.acceptedDays, state.progress.targetDays);
+    return (
+      <section className="brush-card skin-choice-card">
+        <h1>{finalDay ? "양치왕 왕관 스킨" : "오늘의 AR 스킨을 골라요"}</h1>
+        {finalDay ? (
+          <div className="crown-choice">
+            <Image src={AR_SKINS.crown.src} alt="양치왕 왕관" width={180} height={180} />
+            <p>마지막 도전! 양치왕 왕관이 자동으로 적용돼요.</p>
+          </div>
+        ) : <SkinSelector value={selectedSkin} onChange={setSelectedSkin} />}
+        <button type="button" className="primary-action" onClick={() => {
+          setSessionSkin(activeSkin);
+          confirmSkin();
+        }}>이 스킨으로 시작하기</button>
       </section>
     );
   }
@@ -83,13 +151,18 @@ export function BrushingScreen({
   return (
     <section className="brushing-stage">
       {state.stream ? (
-        <CameraPreview stream={state.stream} />
+        <ArCameraPreview
+          stream={state.stream}
+          skinId={sessionSkin}
+          tracker={tracker}
+          elapsedSec={state.elapsedSec}
+          onFaceDetectedSecChange={updateFaceDetectedSec}
+        />
       ) : (
         <div className="timer-only">카메라 없이 타이머로 진행 중이에요.</div>
       )}
       <div className="countdown" aria-live="polite">
-        <strong>{state.remainingSec}</strong>
-        <span>초</span>
+        <strong>{formatMinutesSeconds(state.durationSec === "free" ? state.elapsedSec : state.remainingSec ?? 0)}</strong>
       </div>
       <p>{state.status === "readyToSubmit" ? "양치 완료!" : "구석구석 꼼꼼하게 양치해요."}</p>
       <button
@@ -103,7 +176,7 @@ export function BrushingScreen({
             attemptToken: state.attemptToken,
             idempotencyKey: crypto.randomUUID(),
             elapsedSec: state.elapsedSec,
-            faceDetectedSec: null,
+            faceDetectedSec,
             cameraMode: state.cameraMode,
           });
           activeServices.camera.stop();

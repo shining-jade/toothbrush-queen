@@ -39,6 +39,8 @@ describe("CompletionScreen", () => {
     };
     render(<CompletionScreen input={input} services={services} />);
 
+    expect(screen.getByText("총 1분 0초 동안 양치했어요.")).toBeVisible();
+
     fireEvent.click(screen.getByRole("button", { name: "챌린지 완료하고 제출하기" }));
     expect(screen.getByRole("button", { name: "제출 중" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "제출 중" }));
@@ -76,6 +78,7 @@ describe("CompletionScreen", () => {
     });
 
     expect(screen.getByRole("heading", { name: "양치 완료!" })).toBeVisible();
+    expect(screen.getByText("총 1분 0초 동안 양치했어요.")).toBeVisible();
     expect(screen.getByText("3 / 5일")).toBeVisible();
     expect(screen.getByText("오늘 기록이 새로 인정되었어요.")).toBeVisible();
     expect(screen.getByLabelText("도장판: 5일 중 3일 완료")).toBeVisible();

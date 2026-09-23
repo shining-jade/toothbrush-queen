@@ -2,10 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   createBrushingMachine,
+  formatMinutesSeconds,
   timerState,
 } from "@/features/brushing-session/brushing-machine";
 
 describe("brushing timer", () => {
+  it("formats fixed and free timers as minutes and seconds", () => {
+    expect(formatMinutesSeconds(0)).toBe("00:00");
+    expect(formatMinutesSeconds(60)).toBe("01:00");
+    expect(formatMinutesSeconds(180)).toBe("03:00");
+  });
   it("counts fixed time down from the selected duration", () => {
     const machine = createBrushingMachine({ mode: 60, startedAtMs: 0 });
 

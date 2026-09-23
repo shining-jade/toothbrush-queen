@@ -1,0 +1,31 @@
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 18%));
+}
+
+.message {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 2;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  translate: -50% 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 90%);
+  color: #273252;
+  font-weight: 800;
+  text-align: center;
+}
