@@ -51,6 +51,29 @@ describe("Sheets repositories", () => {
     expect(repo.findByIdempotencyKey("key-1")?.completionId).toBe("cmp-1");
   });
 
+  it("round-trips the free brushing mode without numeric coercion", () => {
+    const memory = new InMemorySheetGateway();
+    const repo = new CompletionRepository(memory);
+    repo.insert({
+      completionId: "cmp-free",
+      idempotencyKey: "key-free",
+      challengeId: "ABC123",
+      studentId: "stu-1",
+      participationDate: "2026-09-23",
+      attemptId: "attempt-free",
+      attemptIndex: 1,
+      selectedDurationSec: "free",
+      elapsedSec: 84,
+      faceDetectedSec: 80,
+      cameraMode: "camera",
+      completed: true,
+      stampGranted: true,
+      createdAt: "2026-09-23T00:01:24.000Z",
+    });
+
+    expect(repo.findByIdempotencyKey("key-free")?.selectedDurationSec).toBe("free");
+  });
+
   it("round-trips challenges and device sessions", () => {
     const memory = new InMemorySheetGateway();
     const challenges = new ChallengeRepository(memory);

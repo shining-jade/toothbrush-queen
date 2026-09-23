@@ -1,10 +1,11 @@
 import type { StartAttemptResult } from "../../../src/shared/contracts";
+import type { BrushingMode } from "../../../src/shared/brushing-mode";
 
 export type AttemptClaims = {
   attemptId: string;
   studentId: string;
   challengeId: string;
-  durationSec: 60 | 180;
+  durationSec: BrushingMode;
   issuedAtMs: number;
   expiresAtMs: number;
 };
@@ -20,7 +21,8 @@ const isClaims = (value: unknown): value is AttemptClaims => {
   if (!value || typeof value !== "object") return false;
   const claims = value as Record<string, unknown>;
   return typeof claims.attemptId === "string" && typeof claims.studentId === "string" &&
-    typeof claims.challengeId === "string" && (claims.durationSec === 60 || claims.durationSec === 180) &&
+    typeof claims.challengeId === "string" &&
+    (claims.durationSec === 60 || claims.durationSec === 180 || claims.durationSec === "free") &&
     typeof claims.issuedAtMs === "number" && typeof claims.expiresAtMs === "number";
 };
 
@@ -31,11 +33,12 @@ export class AttemptTokenService {
     private readonly createAttemptId: () => string,
   ) {}
 
-  issue(studentId: string, challengeId: string, durationSec: 60 | 180) {
+  issue(studentId: string, challengeId: string, durationSec: BrushingMode) {
     const issuedAtMs = this.nowMs();
+    const maximumDurationSec = durationSec === "free" ? 300 : durationSec;
     const claims: AttemptClaims = {
       attemptId: this.createAttemptId(), studentId, challengeId, durationSec, issuedAtMs,
-      expiresAtMs: issuedAtMs + durationSec * 1000 + 30 * 60 * 1000,
+      expiresAtMs: issuedAtMs + maximumDurationSec * 1000 + 30 * 60 * 1000,
     };
     const payload = this.crypto.encode(JSON.stringify(claims));
     return `${payload}.${this.crypto.sign(payload)}`;

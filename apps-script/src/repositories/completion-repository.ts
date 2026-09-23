@@ -1,9 +1,10 @@
 import type { SheetGateway } from "../platform/sheet-gateway";
+import type { BrushingMode } from "../../../src/shared/brushing-mode";
 
 export type CompletionRow = {
   completionId: string; idempotencyKey: string; challengeId: string; studentId: string;
   participationDate: string; attemptId: string; attemptIndex: number;
-  selectedDurationSec: 60 | 180; elapsedSec: number; faceDetectedSec: number | null;
+  selectedDurationSec: BrushingMode; elapsedSec: number; faceDetectedSec: number | null;
   cameraMode: "camera" | "timer-only"; completed: boolean; stampGranted: boolean; createdAt: string;
 };
 
@@ -13,10 +14,17 @@ const toRow = (value: CompletionRow): unknown[] => [
   value.elapsedSec, value.faceDetectedSec ?? "", value.cameraMode, value.completed,
   value.stampGranted, value.createdAt,
 ];
+const parseStoredMode = (value: unknown): BrushingMode => {
+  if (value === "free") return "free";
+  const numeric = Number(value);
+  if (numeric === 60 || numeric === 180) return numeric;
+  throw new Error("INVALID_STORED_DURATION");
+};
+
 const fromRow = (row: unknown[]): CompletionRow => ({
   completionId: String(row[0]), idempotencyKey: String(row[1]), challengeId: String(row[2]),
   studentId: String(row[3]), participationDate: String(row[4]), attemptId: String(row[5]),
-  attemptIndex: Number(row[6]), selectedDurationSec: Number(row[7]) as 60 | 180,
+  attemptIndex: Number(row[6]), selectedDurationSec: parseStoredMode(row[7]),
   elapsedSec: Number(row[8]), faceDetectedSec: row[9] === "" ? null : Number(row[9]),
   cameraMode: String(row[10]) as CompletionRow["cameraMode"], completed: row[11] === true || row[11] === "TRUE",
   stampGranted: row[12] === true || row[12] === "TRUE", createdAt: String(row[13]),

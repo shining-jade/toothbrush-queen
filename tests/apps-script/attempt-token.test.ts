@@ -28,4 +28,17 @@ describe("AttemptTokenService", () => {
     const [payload, signature] = service.issue("stu-1", "ABC123", 60).split(".");
     expect(() => service.verify(`${payload}x.${signature}`)).toThrow("INVALID_ATTEMPT_TOKEN");
   });
+
+  it("round-trips a signed free brushing claim", () => {
+    const service = new AttemptTokenService(cryptoAdapter, () => 1_000, () => "attempt-free");
+
+    const token = service.issue("stu-1", "ABC123", "free");
+
+    expect(service.verify(token)).toMatchObject({
+      attemptId: "attempt-free",
+      durationSec: "free",
+      issuedAtMs: 1_000,
+      expiresAtMs: 2_101_000,
+    });
+  });
 });

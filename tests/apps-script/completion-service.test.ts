@@ -44,7 +44,7 @@ describe("CompletionService", () => {
     challenges.insert({
       challengeId: "ABC123", name: "5일 양치왕", startDate: "2026-09-20",
       endDate: "2026-09-30", targetDays: 5, timeZone: "Asia/Seoul",
-      durationMode: 60, dailyLimit: 1, status: "active",
+      durationMode: "choice", dailyLimit: 1, status: "active",
       createdAt: clock.now().toISOString(), updatedAt: clock.now().toISOString(),
     });
     attemptCounter = 0;
@@ -67,6 +67,25 @@ describe("CompletionService", () => {
     const attemptToken = attempts.issue("stu-1", "ABC123", 60);
     clock.advanceSeconds(59);
     expect(() => service.submit(input(attemptToken), "stu-1")).toThrow("ATTEMPT_TOO_EARLY");
+  });
+
+  it("accepts free brushing at 60 seconds but not before", () => {
+    const attemptToken = attempts.issue("stu-1", "ABC123", "free");
+    clock.advanceSeconds(59);
+    expect(() => service.submit({ ...input(attemptToken), elapsedSec: 59 }, "stu-1"))
+      .toThrow("ATTEMPT_TOO_EARLY");
+
+    clock.advanceSeconds(1);
+    expect(service.submit({ ...input(attemptToken), elapsedSec: 60 }, "stu-1").newlyAccepted)
+      .toBe(true);
+  });
+
+  it("rejects free brushing values over five minutes", () => {
+    const attemptToken = attempts.issue("stu-1", "ABC123", "free");
+    clock.advanceSeconds(301);
+
+    expect(() => service.submit({ ...input(attemptToken), elapsedSec: 301 }, "stu-1"))
+      .toThrow("INVALID_FREE_DURATION");
   });
 
   it("returns one completion for two submissions with the same idempotency key", () => {

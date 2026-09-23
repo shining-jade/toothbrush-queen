@@ -69,6 +69,13 @@ describe("API contracts", () => {
 
   it("requires a supported selected duration to start an attempt", () => {
     expect(
+      StartAttemptInputSchema.parse({
+        challengeId: "ABC123",
+        selectedDurationSec: "free",
+      }),
+    ).toEqual({ challengeId: "ABC123", selectedDurationSec: "free" });
+
+    expect(
       StartAttemptInputSchema.safeParse({
         challengeId: "ABC123",
         selectedDurationSec: 90,

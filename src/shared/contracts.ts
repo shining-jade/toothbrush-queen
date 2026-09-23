@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+import type { BrushingMode } from "./brushing-mode";
+
+export const BrushingModeSchema = z.union([
+  z.literal(60),
+  z.literal(180),
+  z.literal("free"),
+]) satisfies z.ZodType<BrushingMode>;
+
 export const ChallengeIdSchema = z.string().regex(/^[A-Z0-9]{6,24}$/);
 export const DeviceTokenSchema = z.string().min(20).max(256);
 
@@ -49,7 +57,7 @@ export const SessionResumeInputSchema = z
 export const StartAttemptInputSchema = z
   .object({
     challengeId: ChallengeIdSchema,
-    selectedDurationSec: z.union([z.literal(60), z.literal(180)]),
+    selectedDurationSec: BrushingModeSchema,
   })
   .strict();
 
@@ -85,7 +93,7 @@ export const StartAttemptResultSchema = z
   .object({
     attemptId: z.string().min(1).max(64),
     attemptToken: z.string().min(20),
-    durationSec: z.union([z.literal(60), z.literal(180)]),
+    durationSec: BrushingModeSchema,
     issuedAtMs: z.number().int().nonnegative(),
   })
   .strict();
