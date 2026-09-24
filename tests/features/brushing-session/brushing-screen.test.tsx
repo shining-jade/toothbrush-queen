@@ -49,7 +49,7 @@ async function reachPrivacyNotice(
   const view = render(<BrushingScreen challengeId="ABC123" services={testServices.value} completionServices={completionServices} />);
   fireEvent.click(await screen.findByRole("button", { name: mode }));
   expect(screen.getAllByRole("radio")).toHaveLength(15);
-  fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+  fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }));
   return view;
 }
 
@@ -134,6 +134,16 @@ describe("BrushingScreen", () => {
     expect(screen.getByRole("radio", { name: "꽃님 사진관" })).toBeVisible();
   });
 
+  it("keeps a named preview action available while the student chooses a skin", async () => {
+    const testServices = services();
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+    fireEvent.click(await screen.findByRole("button", { name: "60초" }));
+
+    expect(screen.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" })).toBeVisible();
+    fireEvent.click(screen.getByRole("radio", { name: "반짝 토끼" }));
+    expect(screen.getByRole("button", { name: "반짝 토끼 스킨 미리보기" })).toBeVisible();
+  });
+
   it("retries failed preflight without opening the camera", async () => {
     const testServices = services();
     vi.mocked(testServices.value.getProgress).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(progress);
@@ -153,6 +163,19 @@ describe("BrushingScreen", () => {
     expect(screen.queryAllByRole("radio")).toHaveLength(0);
   });
 
+  it("keeps the required crown locked during the final-day camera preview", async () => {
+    const testServices = services("camera");
+    vi.mocked(testServices.value.getProgress).mockResolvedValue({ ...progress, acceptedDays: 4 });
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+    fireEvent.click(await screen.findByRole("button", { name: "60초" }));
+    fireEvent.click(screen.getByRole("button", { name: "양치왕 왕관 스킨 미리보기" }));
+    fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" }));
+    await act(async () => undefined);
+
+    expect(screen.getByRole("button", { name: "양치왕 왕관 스킨으로 진행하기" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "다른 스킨 고르기" })).toBeNull();
+  });
+
   it("runs timer-only when camera permission is unavailable", async () => {
     const testServices = services();
     await reachPrivacyNotice(testServices);
@@ -161,10 +184,45 @@ describe("BrushingScreen", () => {
     expect(document.querySelector("video")).toBeNull();
   });
 
+  it("waits for confirmation after showing the selected skin on camera", async () => {
+    const testServices = services("camera");
+    await reachPrivacyNotice(testServices);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+
+    expect(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "다른 스킨 고르기" })).toBeVisible();
+    act(() => testServices.emit({
+      detected: true,
+      pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
+      nowMs: 100,
+    }));
+    expect(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" }));
+    act(() => testServices.emit({
+      detected: true,
+      pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
+      nowMs: 200,
+    }));
+    expect(screen.getByText("01:00")).toBeVisible();
+  });
+
+  it("returns from the camera preview to the skin choices without losing the duration", async () => {
+    const testServices = services("camera");
+    await reachPrivacyNotice(testServices, "180초");
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+
+    fireEvent.click(screen.getByRole("button", { name: "다른 스킨 고르기" }));
+    expect(screen.getByRole("radio", { name: "냥냥 볼터치" })).toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "반짝 토끼" }));
+    expect(screen.getByRole("button", { name: "반짝 토끼 스킨 미리보기" })).toBeVisible();
+  });
+
   it("lets the student start immediately while waiting for a face", async () => {
     const testServices = services("camera");
     await reachPrivacyNotice(testServices);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" }));
 
     expect(screen.getByRole("button", { name: "바로 시작하기" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "양치 완료 기록하기" })).toBeNull();
@@ -178,6 +236,7 @@ describe("BrushingScreen", () => {
     const testServices = services("camera");
     await reachPrivacyNotice(testServices);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" }));
     act(() => testServices.emit({
       detected: true,
       pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
@@ -240,7 +299,7 @@ describe("BrushingScreen", () => {
     render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
     await act(async () => undefined);
     fireEvent.click(screen.getByRole("button", { name: "자유 양치" }));
-    fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
     expect(screen.getByText("00:00")).toBeVisible();
     expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
@@ -273,7 +332,7 @@ describe("BrushingScreen", () => {
     render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
     await act(async () => undefined);
     fireEvent.click(screen.getByRole("button", { name: "60초" }));
-    fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }));
     vi.useFakeTimers();
     vi.spyOn(performance, "now").mockReturnValue(0);
 
@@ -303,8 +362,9 @@ describe("BrushingScreen", () => {
     }} />);
     await act(async () => undefined);
     fireEvent.click(screen.getByRole("button", { name: "60초" }));
-    fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+    fireEvent.click(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" }));
     fireEvent.click(screen.getByRole("button", { name: "바로 시작하기" }));
     vi.spyOn(performance, "now").mockReturnValue(60_000);
     act(() => vi.advanceTimersByTime(60_000));

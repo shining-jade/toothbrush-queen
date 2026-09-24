@@ -70,16 +70,22 @@ export function BrushingScreen({
   const [completionInput, setCompletionInput] = useState<SubmitCompletionInput | null>(null);
   const [selectedSkin, setSelectedSkin] = useState<string>("cat");
   const [sessionSkin, setSessionSkin] = useState<ArSkin>(AR_SKINS.cat);
+  const [skinPreviewConfirmed, setSkinPreviewConfirmed] = useState(false);
   const [faceDetectedSec, setFaceDetectedSec] = useState<number | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
   const tracker = useMemo(() => activeServices.createFaceTracker(), [activeServices]);
   const updateFaceDetectedSec = useCallback((seconds: number | null) => {
     setFaceDetectedSec(seconds);
   }, []);
-  const { state, chooseDuration, confirmSkin, retryPreflight, start, beginBrushing } = useBrushingSession(
-    challengeId,
-    activeServices,
-  );
+  const {
+    state,
+    chooseDuration,
+    confirmSkin,
+    chooseAnotherSkin,
+    retryPreflight,
+    start,
+    beginBrushing,
+  } = useBrushingSession(challengeId, activeServices);
   const previousTimerStatus = useRef(state.status);
 
   useEffect(() => {
@@ -152,10 +158,11 @@ export function BrushingScreen({
             <p>마지막 도전! 양치왕 왕관이 자동으로 적용돼요.</p>
           </div>
         ) : <SkinSelector skins={catalog} value={selectedSkin} onChange={setSelectedSkin} />}
-        <button type="button" className="primary-action" onClick={() => {
+        <button type="button" className="primary-action skin-choice-action" onClick={() => {
           setSessionSkin(activeSkin);
+          setSkinPreviewConfirmed(false);
           confirmSkin();
-        }}>이 스킨으로 시작하기</button>
+        }}>{activeSkin.label} 스킨 미리보기</button>
       </section>
     );
   }
@@ -204,8 +211,8 @@ export function BrushingScreen({
           tracker={tracker}
           elapsedSec={state.elapsedSec}
           onFaceDetectedSecChange={updateFaceDetectedSec}
-          preparing={state.status === "preparing"}
-          onReady={beginBrushing}
+          preparing={state.status === "preparing" && skinPreviewConfirmed}
+          onReady={skinPreviewConfirmed ? beginBrushing : undefined}
         />
       ) : (
         <div className="timer-only">카메라 없이 타이머로 진행 중이에요.</div>
@@ -222,13 +229,40 @@ export function BrushingScreen({
         </div>
       )}
       {state.status === "preparing" ? (
-        <>
-          <p>얼굴을 화면에 맞추면 자동으로 시작해요. 인식이 어려우면 바로 시작하세요.</p>
-          <button type="button" className="primary-action" onClick={beginBrushing}>
-            바로 시작하기
-          </button>
-        </>
-      ) : <p>{state.status === "readyToSubmit" ? "양치 완료!" : "구석구석 꼼꼼하게 양치해요."}</p>}
+        skinPreviewConfirmed ? (
+          <>
+            <p>얼굴을 화면에 맞추면 자동으로 시작해요. 인식이 어려우면 바로 시작하세요.</p>
+            <button type="button" className="primary-action" onClick={beginBrushing}>
+              바로 시작하기
+            </button>
+          </>
+        ) : (
+          <div className="skin-preview-confirmation">
+            <p><strong>{sessionSkin.label}</strong> 스킨이 잘 어울리나요?</p>
+            <button
+              type="button"
+              className="primary-action"
+              onClick={() => setSkinPreviewConfirmed(true)}
+            >
+              {sessionSkin.label} 스킨으로 진행하기
+            </button>
+            {sessionSkin.id !== "crown" && (
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={() => {
+                  setSkinPreviewConfirmed(false);
+                  chooseAnotherSkin();
+                }}
+              >
+                다른 스킨 고르기
+              </button>
+            )}
+          </div>
+        )
+      ) : (
+        <p>{state.status === "readyToSubmit" ? "양치 완료!" : "구석구석 꼼꼼하게 양치해요."}</p>
+      )}
       {state.status !== "preparing" && <button
         type="button"
         className="primary-action"

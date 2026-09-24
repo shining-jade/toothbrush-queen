@@ -39,7 +39,6 @@ async function joinWithCamera(page: Page) {
   await page.getByLabel("번호").fill("12");
   await page.getByLabel("이름").fill("김민지");
   await page.getByRole("button", { name: "챌린지 참여하기" }).click();
-  await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
 }
 
 test("student chooses a skin and free brushing records measured time", async ({ page }) => {
@@ -59,11 +58,18 @@ test("student chooses a skin and free brushing records measured time", async ({ 
   if (process.env.CAPTURE_VISUALS === "1") {
     await page.screenshot({ path: "docs/screenshots/ar-animal-selection.png", fullPage: true });
   }
-  await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
+  const previewButton = page.getByRole("button", { name: "반짝 토끼 스킨 미리보기" });
+  await expect(previewButton).toBeVisible();
+  const previewButtonBox = await previewButton.boundingBox();
+  expect(previewButtonBox).not.toBeNull();
+  expect(previewButtonBox!.y + previewButtonBox!.height).toBeLessThanOrEqual(
+    (await page.viewportSize())!.height,
+  );
+  await previewButton.click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
   await expect(page.getByText("00:00")).toBeVisible();
   const stageBox = await page.locator(".brushing-stage").boundingBox();
-  const timerBox = await page.locator(".countdown").boundingBox();
+  const timerBox = await page.locator(".adjustable-countdown").boundingBox();
   expect(stageBox).not.toBeNull();
   expect(timerBox).not.toBeNull();
   expect(timerBox!.y).toBeLessThan(stageBox!.y + stageBox!.height * 0.25);
@@ -90,7 +96,7 @@ test("last challenge day forces the crown", async ({ page }) => {
   if (process.env.CAPTURE_VISUALS === "1") {
     await page.screenshot({ path: "docs/screenshots/ar-crown-final-day.png", fullPage: true });
   }
-  await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
+  await page.getByRole("button", { name: "양치왕 왕관 스킨 미리보기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
   await page.clock.fastForward(60_000);
   await page.getByRole("button", { name: "양치 완료 기록하기" }).click();
@@ -103,20 +109,28 @@ test("last challenge day forces the crown", async ({ page }) => {
   await expect(page.getByRole("link", { name: "홈으로 돌아가기" })).toBeVisible();
 });
 
-test("camera flow reaches 100 percent, permits readiness skip, and fits mobile widths", async ({ page }) => {
+test("camera flow permits skin reselection, readiness skip, and fits mobile widths", async ({ page }) => {
   await mockAppsScript(page, { durationMode: "choice", acceptedDays: 2 });
+  await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
   await joinWithCamera(page);
 
-  const preflight = page.getByRole("progressbar", { name: "진행 상황을 확인하고 있어요." });
-  await expect(preflight).toHaveAttribute("aria-valuenow", "100");
+  await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
   await page.getByRole("button", { name: "60초" }).click();
-  await page.getByRole("button", { name: "이 스킨으로 시작하기" }).click();
+  await page.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
 
   const cameraLoading = page.getByRole("progressbar", { name: "양치 도전을 준비하고 있어요." });
   await expect(cameraLoading).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByRole("button", { name: "인식 없이 시작하기" })).toBeVisible();
-  await page.getByRole("button", { name: "인식 없이 시작하기" }).click();
+  await expect(page.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" })).toBeVisible();
+  await page.getByRole("button", { name: "다른 스킨 고르기" }).click();
+  await expect(page.getByRole("radio", { name: "냥냥 볼터치" })).toBeChecked();
+  await page.getByRole("radio", { name: "반짝 토끼" }).click();
+  await page.getByRole("button", { name: "반짝 토끼 스킨 미리보기" }).click();
+  await page.getByRole("button", { name: "확인하고 시작하기" }).click();
+  await expect(page.getByRole("button", { name: "반짝 토끼 스킨으로 진행하기" })).toBeVisible();
+  await page.getByRole("button", { name: "반짝 토끼 스킨으로 진행하기" }).click();
+  await expect(page.getByRole("button", { name: "바로 시작하기" })).toBeVisible();
+  await page.getByRole("button", { name: "바로 시작하기" }).click();
   await expect(page.getByText("01:00")).toBeVisible();
   await expect(page.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
 

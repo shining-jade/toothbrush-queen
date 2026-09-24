@@ -64,6 +64,11 @@ export function useBrushingSession(
   const [state, setState] = useState<BrushingSessionState>({ status: "loadingProgress", progress: 10 });
   const [preflightAttempt, setPreflightAttempt] = useState(0);
   const operationGeneration = useRef(0);
+  const skinSelection = useRef<{
+    mode: BrushingMode;
+    challenge: Challenge;
+    progress: StudentProgress;
+  } | null>(null);
   const now = useCallback(() => services.now?.() ?? performance.now(), [services]);
 
   useEffect(() => {
@@ -97,9 +102,15 @@ export function useBrushingSession(
   }, [challengeId, preflightAttempt, services]);
 
   const chooseDuration = useCallback((mode: BrushingMode) => {
-    setState((current) => current.status === "choosing"
-      ? { status: "choosingSkin", mode, challenge: current.challenge, progress: current.progress }
-      : current);
+    setState((current) => {
+      if (current.status !== "choosing") return current;
+      skinSelection.current = {
+        mode,
+        challenge: current.challenge,
+        progress: current.progress,
+      };
+      return { status: "choosingSkin", ...skinSelection.current };
+    });
   }, []);
 
   const confirmSkin = useCallback(() => {
@@ -171,6 +182,13 @@ export function useBrushingSession(
       : current);
   }, [now]);
 
+  const chooseAnotherSkin = useCallback(() => {
+    if (state.status !== "preparing" || !skinSelection.current) return;
+    operationGeneration.current += 1;
+    services.camera.stop();
+    setState({ status: "choosingSkin", ...skinSelection.current });
+  }, [services, state.status]);
+
   const timerIsActive = state.status === "running" || state.status === "readyToSubmit";
   const timerDurationSec = timerIsActive ? state.durationSec : null;
   const timerStartedAtMs = timerIsActive ? state.startedAtMs : null;
@@ -232,5 +250,13 @@ export function useBrushingSession(
     setPreflightAttempt((value) => value + 1);
   }, []);
 
-  return { state, chooseDuration, confirmSkin, retryPreflight, start, beginBrushing };
+  return {
+    state,
+    chooseDuration,
+    confirmSkin,
+    chooseAnotherSkin,
+    retryPreflight,
+    start,
+    beginBrushing,
+  };
 }
