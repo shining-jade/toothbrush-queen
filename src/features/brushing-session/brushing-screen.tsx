@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { LoadingIndicator } from "@/components/loading-indicator";
+import { LoadingStory } from "@/components/loading-story";
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
 import { AR_SKINS, mergeSkinCatalog, type ArSkin } from "@/features/ar-skins/skin-registry";
 import { SkinSelector } from "@/features/ar-skins/skin-selector";
@@ -99,7 +99,17 @@ export function BrushingScreen({
   }
 
   if (state.status === "loadingProgress") {
-    return <section className="brush-card"><LoadingIndicator label="진행 상황을 확인하고 있어요." progress={state.progress} /></section>;
+    return (
+      <section className="brush-card">
+        <LoadingStory
+          imageSrc="/images/brushing-queen-progress-check.png"
+          imageAlt="도장판의 도장을 세어 보는 학생"
+          label="진행 상황을 확인하고 있어요."
+          progress={state.progress}
+          priority
+        />
+      </section>
+    );
   }
 
   if (state.status === "progressError") {
@@ -166,7 +176,16 @@ export function BrushingScreen({
   }
 
   if (state.status === "requestingCamera") {
-    return <section className="brush-card"><LoadingIndicator label="양치 도전을 준비하고 있어요." progress={state.progress} /></section>;
+    return (
+      <section className="brush-card">
+        <LoadingStory
+          imageSrc="/images/brushing-queen-ready.png"
+          imageAlt="거울 앞에서 양치를 준비하는 학생"
+          label="양치 도전을 준비하고 있어요."
+          progress={state.progress}
+        />
+      </section>
+    );
   }
 
   if (state.status === "error") {

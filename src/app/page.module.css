@@ -52,24 +52,6 @@
   gap: 18px;
 }
 
-:global(.student-loading-illustration) {
-  position: relative;
-  margin: 0 0 18px;
-  overflow: hidden;
-  border: 1px solid rgb(88 117 216 / 14%);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #f8fbff, #deefff);
-  box-shadow: 0 12px 28px rgb(33 48 88 / 10%);
-}
-
-:global(.student-loading-illustration img) {
-  display: block;
-  width: 100%;
-  height: clamp(220px, 48dvh, 380px);
-  object-fit: cover;
-  object-position: center 28%;
-}
-
 :global(.primary-action) {
   display: grid;
   width: 100%;

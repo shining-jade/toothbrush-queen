@@ -116,6 +116,30 @@ a {
   transition: width 220ms ease-out;
 }
 
+.loading-story {
+  display: grid;
+  width: 100%;
+  gap: 18px;
+}
+
+.loading-story-illustration {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgb(88 117 216 / 14%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff, #deefff);
+  box-shadow: 0 12px 28px rgb(33 48 88 / 10%);
+}
+
+.loading-story-illustration img {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 46dvh, 360px);
+  object-fit: cover;
+  object-position: center 24%;
+}
+
 .retry-brushing {
   display: grid;
   gap: 10px;

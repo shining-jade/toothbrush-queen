@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, type FormEvent } from "react";
 
-import { LoadingIndicator } from "@/components/loading-indicator";
+import { LoadingStory } from "@/components/loading-story";
 import { StudentDashboard } from "@/features/challenge/student-dashboard";
 import { AppsScriptClient } from "@/lib/api/apps-script-client";
 import { getClientConfig } from "@/lib/config/client-env";
@@ -47,19 +46,12 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
   if (state.status === "loading") {
     return (
       <section className="loading-panel">
-        <figure className="student-loading-illustration">
-          <Image
-            src="/images/brushing-queen-student-option-2.png"
-            alt="왕관을 쓰고 즐겁게 양치하는 학생"
-            width={1024}
-            height={1536}
-            sizes="(max-width: 480px) calc(100vw - 80px), 400px"
-            priority
-          />
-        </figure>
-        <LoadingIndicator
+        <LoadingStory
+          imageSrc="/images/brushing-queen-student-option-2.png"
+          imageAlt="왕관을 쓰고 즐겁게 양치하는 학생"
           label="챌린지를 불러오고 있어요."
           progress={state.progress}
+          priority
         />
       </section>
     );

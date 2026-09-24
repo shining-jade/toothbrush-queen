@@ -69,6 +69,10 @@ describe("BrushingScreen", () => {
 
     await act(async () => undefined);
     expect(screen.getByRole("progressbar", { name: "진행 상황을 확인하고 있어요." })).toHaveAttribute("aria-valuenow", "10");
+    expect(screen.getByRole("img", { name: "도장판의 도장을 세어 보는 학생" })).toHaveAttribute(
+      "src",
+      expect.stringContaining("brushing-queen-progress-check"),
+    );
 
     await act(async () => challengeRequest.resolve(challenge));
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
@@ -93,6 +97,10 @@ describe("BrushingScreen", () => {
 
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
     expect(screen.getByRole("progressbar", { name: "양치 도전을 준비하고 있어요." })).toHaveAttribute("aria-valuenow", "10");
+    expect(screen.getByRole("img", { name: "거울 앞에서 양치를 준비하는 학생" })).toHaveAttribute(
+      "src",
+      expect.stringContaining("brushing-queen-ready"),
+    );
 
     await act(async () => cameraRequest.resolve({ mode: "camera", stream: {} as MediaStream }));
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "55");

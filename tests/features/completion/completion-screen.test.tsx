@@ -46,6 +46,10 @@ describe("CompletionScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "챌린지 완료하고 제출하기" }));
     expect(screen.getByRole("button", { name: "제출 중" })).toBeDisabled();
     expect(screen.getByRole("status", { name: "양치 기록을 제출하고 있어요." })).toBeVisible();
+    expect(screen.getByRole("img", { name: "완성한 도장판을 들고 기뻐하는 학생" })).toHaveAttribute(
+      "src",
+      expect.stringContaining("brushing-queen-stamp-complete"),
+    );
     fireEvent.click(screen.getByRole("button", { name: "제출 중" }));
     expect(services.submitOrQueue).toHaveBeenCalledOnce();
 

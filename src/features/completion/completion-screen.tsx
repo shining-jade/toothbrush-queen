@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { LoadingIndicator } from "@/components/loading-indicator";
+import { LoadingStory } from "@/components/loading-story";
 import { CompletionService, type CompletionOutcome } from "@/features/completion/completion-service";
 import { PendingCompletionStore } from "@/features/completion/pending-completion-store";
 import { StampBoard } from "@/features/stamp-board/stamp-board";
@@ -225,7 +225,13 @@ export function CompletionScreen({
     <section className="completion-card">
       <h1>양치 기록 보내기</h1>
       {elapsedCopy && <p>{elapsedCopy}</p>}
-      {state.status === "submitting" && <LoadingIndicator label="양치 기록을 제출하고 있어요." />}
+      {state.status === "submitting" && (
+        <LoadingStory
+          imageSrc="/images/brushing-queen-stamp-complete.png"
+          imageAlt="완성한 도장판을 들고 기뻐하는 학생"
+          label="양치 기록을 제출하고 있어요."
+        />
+      )}
       {state.status === "pending" && <p>기록 전송이 보류되었습니다</p>}
       {state.status === "error" && <p role="alert">기록을 전송하지 못했어요.</p>}
       {state.status === "pending" ? (
