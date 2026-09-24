@@ -196,6 +196,15 @@ export function CompletionScreen({
             </Link>
           </>
         )}
+        <div className="retry-brushing">
+          <p>다시 해도 오늘 도장은 1개만 인정돼요.</p>
+          <Link
+            className="secondary-action"
+            href={`/brush?challenge=${encodeURIComponent(state.result.challengeId)}`}
+          >
+            다시 양치하기
+          </Link>
+        </div>
       </section>
     );
   }

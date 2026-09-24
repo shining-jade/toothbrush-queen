@@ -40,7 +40,16 @@ export function StudentDashboard({
       {phase === "ended" && <p className="status-copy">챌린지가 종료되었어요.</p>}
       {phase === "inactive" && <p className="status-copy">아직 참여할 수 없는 챌린지예요.</p>}
       {phase === "active" && progress.completedToday && (
-        <p className="status-copy">오늘의 양치를 완료했어요!</p>
+        <div className="retry-brushing">
+          <p className="status-copy">오늘의 양치를 완료했어요!</p>
+          <p className="status-copy">다시 해도 오늘 도장은 1개만 인정돼요.</p>
+          <Link
+            className="secondary-action"
+            href={`/brush?challenge=${encodeURIComponent(challenge.challengeId)}`}
+          >
+            다시 양치하기
+          </Link>
+        </div>
       )}
 
       {canStart && (

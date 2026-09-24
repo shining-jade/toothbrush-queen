@@ -116,6 +116,29 @@ a {
   transition: width 220ms ease-out;
 }
 
+.retry-brushing {
+  display: grid;
+  gap: 10px;
+}
+
+.retry-brushing p {
+  margin: 0;
+}
+
+.secondary-action {
+  display: grid;
+  width: 100%;
+  min-height: 52px;
+  place-items: center;
+  padding: 12px 18px;
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  background: white;
+  color: var(--primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .loading-spinner {
   width: 22px;
   height: 22px;

@@ -95,6 +95,11 @@ describe("CompletionScreen", () => {
       "href",
       "/?challenge=ABC123",
     );
+    expect(screen.getByText("다시 해도 오늘 도장은 1개만 인정돼요.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "다시 양치하기" })).toHaveAttribute(
+      "href",
+      "/brush?challenge=ABC123",
+    );
   });
 
   it("requires and submits one reflection after the final stamp before showing the home link", async () => {
@@ -113,6 +118,10 @@ describe("CompletionScreen", () => {
 
     expect(screen.getByRole("heading", { name: "완주 소감을 남겨주세요" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "홈으로 돌아가기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "다시 양치하기" })).toHaveAttribute(
+      "href",
+      "/brush?challenge=ABC123",
+    );
     fireEvent.change(screen.getByLabelText("완주 소감"), { target: { value: "매일 양치하는 습관이 생겼어요." } });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "소감 제출하기" }));

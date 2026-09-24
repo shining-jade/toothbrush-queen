@@ -71,7 +71,7 @@ describe("StudentDashboard", () => {
     expect(screen.queryByRole("link", { name: "오늘의 양치 도전하기" })).toBeNull();
   });
 
-  it("shows today's completion instead of another action", () => {
+  it("offers another brushing attempt after today's completion", () => {
     render(
       <StudentDashboard
         challenge={baseChallenge}
@@ -82,5 +82,10 @@ describe("StudentDashboard", () => {
 
     expect(screen.getByText("오늘의 양치를 완료했어요!")).toBeVisible();
     expect(screen.queryByRole("link", { name: "오늘의 양치 도전하기" })).toBeNull();
+    expect(screen.getByText("다시 해도 오늘 도장은 1개만 인정돼요.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "다시 양치하기" })).toHaveAttribute(
+      "href",
+      "/brush?challenge=ABC123",
+    );
   });
 });
