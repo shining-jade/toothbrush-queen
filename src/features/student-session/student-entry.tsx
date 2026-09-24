@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, type FormEvent } from "react";
 
 import { LoadingIndicator } from "@/components/loading-indicator";
@@ -79,20 +80,32 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
   }
 
   return (
-    <section className="identity-card" aria-labelledby="join-title">
-      <p className="eyebrow">{state.challenge.name}</p>
-      <h2 id="join-title">학생 정보를 입력해 주세요</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="number-fields">
-          <label>학년<input name="grade" inputMode="numeric" required /></label>
-          <label>반<input name="classNo" inputMode="numeric" required /></label>
-          <label>번호<input name="studentNo" inputMode="numeric" required /></label>
-        </div>
-        <label>이름<input name="name" autoComplete="name" required /></label>
-        <button type="submit" className="primary-action" disabled={joining}>
-          {joining ? "참여 중..." : "챌린지 참여하기"}
-        </button>
-      </form>
-    </section>
+    <div className="student-entry">
+      <section className="identity-card" aria-labelledby="join-title">
+        <p className="eyebrow">{state.challenge.name}</p>
+        <h2 id="join-title">학생 정보를 입력해 주세요</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="number-fields">
+            <label>학년<input name="grade" inputMode="numeric" required /></label>
+            <label>반<input name="classNo" inputMode="numeric" required /></label>
+            <label>번호<input name="studentNo" inputMode="numeric" required /></label>
+          </div>
+          <label>이름<input name="name" autoComplete="name" required /></label>
+          <button type="submit" className="primary-action" disabled={joining}>
+            {joining ? "참여 중..." : "챌린지 참여하기"}
+          </button>
+        </form>
+      </section>
+      <figure className="student-entry-illustration">
+        <Image
+          src="/images/brushing-queen-student.png"
+          alt="왕관을 쓰고 즐겁게 양치하는 학생"
+          width={1024}
+          height={1536}
+          sizes="(max-width: 480px) calc(100vw - 40px), 440px"
+          priority
+        />
+      </figure>
+    </div>
   );
 }

@@ -90,6 +90,20 @@ describe("StudentEntry", () => {
     }
   });
 
+  it("shows a cheerful tooth-brushing queen illustration below the entry form", async () => {
+    render(<StudentEntry challengeId="ABC123" services={services(null)} />);
+
+    const illustration = await screen.findByRole("img", {
+      name: "왕관을 쓰고 즐겁게 양치하는 학생",
+    });
+
+    const source = illustration.getAttribute("src");
+    expect(source).not.toBeNull();
+    expect(new URL(source ?? "", "http://localhost").searchParams.get("url")).toBe(
+      "/images/brushing-queen-student.png",
+    );
+  });
+
   it("trims identity fields, joins once, and stores the returned token", async () => {
     const testServices = services(null);
     render(<StudentEntry challengeId="ABC123" services={testServices} />);
