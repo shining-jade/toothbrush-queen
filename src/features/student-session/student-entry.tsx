@@ -47,6 +47,16 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
   if (state.status === "loading") {
     return (
       <section className="loading-panel">
+        <figure className="student-loading-illustration">
+          <Image
+            src="/images/brushing-queen-student-option-2.png"
+            alt="왕관을 쓰고 즐겁게 양치하는 학생"
+            width={1024}
+            height={1536}
+            sizes="(max-width: 480px) calc(100vw - 80px), 400px"
+            priority
+          />
+        </figure>
         <LoadingIndicator
           label="챌린지를 불러오고 있어요."
           progress={state.progress}
@@ -99,16 +109,6 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
           </button>
         </form>
       </section>
-      <figure className="student-entry-illustration">
-        <Image
-          src="/images/brushing-queen-student-option-2.png"
-          alt="왕관을 쓰고 즐겁게 양치하는 학생"
-          width={1024}
-          height={1536}
-          sizes="(max-width: 480px) calc(100vw - 40px), 440px"
-          priority
-        />
-      </figure>
     </div>
   );
 }

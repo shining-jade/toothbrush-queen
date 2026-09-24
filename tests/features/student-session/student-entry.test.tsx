@@ -96,6 +96,23 @@ describe("StudentEntry", () => {
     expect(screen.getByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
   });
 
+  it("shows the tooth-brushing queen illustration while the challenge loads", () => {
+    const challengeRequest = deferred<typeof challenge>();
+    const testServices = services(null);
+    testServices.api.request = vi.fn(() => challengeRequest.promise);
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+
+    const illustration = screen.getByRole("img", {
+      name: "왕관을 쓰고 즐겁게 양치하는 학생",
+    });
+    const source = illustration.getAttribute("src");
+    expect(source).not.toBeNull();
+    expect(new URL(source ?? "", "http://localhost").searchParams.get("url")).toBe(
+      "/images/brushing-queen-student-option-2.png",
+    );
+  });
+
   it("loads the challenge and remembered student session in parallel", async () => {
     const challengeRequest = deferred<typeof challenge>();
     const resumeRequest = deferred<{ status: "authenticated"; progress: typeof progress }>();
@@ -143,18 +160,13 @@ describe("StudentEntry", () => {
     }
   });
 
-  it("shows a cheerful tooth-brushing queen illustration below the entry form", async () => {
+  it("removes the tooth-brushing illustration after the entry form loads", async () => {
     render(<StudentEntry challengeId="ABC123" services={services(null)} />);
 
-    const illustration = await screen.findByRole("img", {
+    expect(await screen.findByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
+    expect(screen.queryByRole("img", {
       name: "왕관을 쓰고 즐겁게 양치하는 학생",
-    });
-
-    const source = illustration.getAttribute("src");
-    expect(source).not.toBeNull();
-    expect(new URL(source ?? "", "http://localhost").searchParams.get("url")).toBe(
-      "/images/brushing-queen-student-option-2.png",
-    );
+    })).toBeNull();
   });
 
   it("trims identity fields, joins once, and stores the returned token", async () => {
