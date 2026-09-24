@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ArCameraPreview } from "@/features/ar-skins/ar-camera-preview";
 import { AR_SKINS, mergeSkinCatalog } from "@/features/ar-skins/skin-registry";
 import type { FaceTrackingResult, FaceTracker } from "@/lib/face-tracking/face-tracker";
-import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 function fixture() {
   let emitResult: ((result: FaceTrackingResult) => void) | undefined;
@@ -171,20 +170,16 @@ describe("ArCameraPreview", () => {
     const overlay = screen.getByTestId("ar-skin-overlay");
     expect(overlay).toHaveStyle({ visibility: "hidden" });
     loadOverlay();
-    expect(overlay).toHaveStyle({ left: "160px", width: "304px", visibility: "visible" });
+    expect(overlay).toHaveStyle({ left: "272px", width: "363.52px", visibility: "visible" });
 
     stageSize = { width: 430, height: 932 };
     act(() => resizeStage?.());
-    expect(overlay).toHaveStyle({ left: "215px", width: "414px" });
+    expect(overlay).toHaveStyle({ left: "365.5px", width: "488.48px" });
   });
 
-  it("guides face first and completes readiness after a toothbrush-like candidate", async () => {
+  it("starts automatically when a face is detected without checking for a toothbrush", async () => {
     const { tracker, emit } = fixture();
     const onReady = vi.fn();
-    const detector: ToothbrushLikeDetector = {
-      observe: vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true),
-      reset: vi.fn(),
-    };
     render(
       <ArCameraPreview
         stream={{} as MediaStream}
@@ -193,18 +188,16 @@ describe("ArCameraPreview", () => {
         elapsedSec={0}
         onFaceDetectedSecChange={vi.fn()}
         preparing
-        readinessDetector={detector}
         onReady={onReady}
       />,
     );
     await act(async () => undefined);
-    expect(screen.getByText("얼굴을 먼저 화면에 보여주세요.")).toBeVisible();
+    expect(screen.getByText("얼굴을 화면에 맞추면 자동으로 시작해요.")).toBeVisible();
 
     act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
-    expect(screen.getByText("칫솔을 입 가까이 가져와 주세요.")).toBeVisible();
-    expect(onReady).not.toHaveBeenCalled();
+    expect(onReady).toHaveBeenCalledOnce();
 
-    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 }, nowMs: 900 }));
+    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.3, rotationDeg: 0 }, nowMs: 900 }));
     expect(onReady).toHaveBeenCalledOnce();
   });
 });

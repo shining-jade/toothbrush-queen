@@ -42,25 +42,25 @@ export function boundedOverlayStyle(
   let height = width / aspectRatio;
   const rotatedWidth = cosine * width + sine * height;
   const rotatedHeight = sine * width + cosine * height;
-  const availableWidth = stageSize.width - insetPx * 2;
-  const availableHeight = stageSize.height - insetPx * 2;
-  const fitScale = Math.min(1, availableWidth / rotatedWidth, availableHeight / rotatedHeight);
+  const fitScale = Math.min(
+    1,
+    stageSize.width * 1.8 / rotatedWidth,
+    stageSize.height * 1.8 / rotatedHeight,
+  );
   width *= fitScale;
   height *= fitScale;
 
-  const halfRotatedWidth = (cosine * width + sine * height) / 2;
-  const halfRotatedHeight = (sine * width + cosine * height) / 2;
   const requestedX = (pose.centerX + pose.width * calibration.anchorX) * stageSize.width;
   const requestedY = (pose.centerY + pose.width * calibration.anchorY) * stageSize.height;
   const centerX = clamp(
     requestedX,
-    insetPx + halfRotatedWidth,
-    stageSize.width - insetPx - halfRotatedWidth,
+    insetPx,
+    stageSize.width - insetPx,
   );
   const centerY = clamp(
     requestedY,
-    insetPx + halfRotatedHeight,
-    stageSize.height - insetPx - halfRotatedHeight,
+    insetPx,
+    stageSize.height - insetPx,
   );
 
   return {

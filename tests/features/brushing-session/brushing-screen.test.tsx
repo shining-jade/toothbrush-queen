@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { BrushingScreen, type BrushingScreenServices } from "@/features/brushing-session/brushing-screen";
 import type { CompletionScreenServices } from "@/features/completion/completion-screen";
 import type { FaceTrackingResult } from "@/lib/face-tracking/face-tracker";
-import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 const challenge = { challengeId: "ABC123", name: "5일 양치왕 챌린지", startDate: "2026-09-20", endDate: "2026-09-30", targetDays: 5, timeZone: "Asia/Seoul", durationMode: "choice" as const, dailyLimit: 1, status: "active" as const };
 const remoteSkin = { skinId: "skin-flower-1", name: "꽃님 사진관", imageUrl: "https://example.com/flower.png", anchorX: 0, anchorY: -0.4, scale: 1.5, rotationOffset: 0, version: 1, sortOrder: 1 };
@@ -25,10 +24,6 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
     start: vi.fn(async (_video, onResult: (result: FaceTrackingResult) => void) => { emitResult = onResult; }),
     stop: vi.fn(),
   };
-  const readinessDetector: ToothbrushLikeDetector = {
-    observe: vi.fn(() => false),
-    reset: vi.fn(),
-  };
   const value: BrushingScreenServices = {
     camera: { start: vi.fn().mockResolvedValue({ mode, stream: resultStream }), stop: vi.fn(() => resultStream?.getTracks().forEach((item) => item.stop())) },
     api: { request: vi.fn().mockImplementation((_action, payload) => Promise.resolve({ attemptId: "attempt-1", attemptToken: "signed-attempt-token-1234567890", durationSec: (payload as { selectedDurationSec: 60 | 180 | "free" }).selectedDurationSec, issuedAtMs: 1 })) },
@@ -36,7 +31,6 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
     getChallenge: vi.fn().mockResolvedValue(challenge),
     getProgress: vi.fn().mockResolvedValue(progress),
     createFaceTracker: vi.fn(() => tracker),
-    createToothbrushLikeDetector: vi.fn(() => readinessDetector),
     completionFeedback: {
       prime: vi.fn(),
       signal: vi.fn(),
@@ -44,7 +38,7 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
     },
     loadingHoldMs: 0,
   };
-  return { value, tracker, readinessDetector, emit: (result: FaceTrackingResult) => emitResult?.(result) };
+  return { value, tracker, emit: (result: FaceTrackingResult) => emitResult?.(result) };
 }
 
 async function reachPrivacyNotice(
@@ -159,22 +153,21 @@ describe("BrushingScreen", () => {
     expect(document.querySelector("video")).toBeNull();
   });
 
-  it("waits for readiness on camera and lets the student skip recognition", async () => {
+  it("lets the student start immediately while waiting for a face", async () => {
     const testServices = services("camera");
     await reachPrivacyNotice(testServices);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
 
-    expect(screen.getByRole("button", { name: "인식 없이 시작하기" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "바로 시작하기" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "양치 완료 기록하기" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "인식 없이 시작하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "바로 시작하기" }));
     expect(screen.getByText("01:00")).toBeVisible();
     expect(screen.getByRole("button", { name: "양치 완료 기록하기" })).toBeEnabled();
   });
 
-  it("starts brushing when the permissive detector reports ready", async () => {
+  it("starts brushing as soon as a face is detected", async () => {
     const testServices = services("camera");
-    vi.mocked(testServices.readinessDetector.observe).mockReturnValue(true);
     await reachPrivacyNotice(testServices);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
     act(() => testServices.emit({
@@ -183,8 +176,30 @@ describe("BrushingScreen", () => {
       nowMs: 100,
     }));
 
-    expect(screen.queryByRole("button", { name: "인식 없이 시작하기" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "바로 시작하기" })).toBeNull();
     expect(screen.getByText("01:00")).toBeVisible();
+  });
+
+  it("lets the student shrink and drag the timer on different phone sizes", async () => {
+    const testServices = services();
+    await reachPrivacyNotice(testServices);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
+
+    const timer = screen.getByLabelText("양치 초시계");
+    expect(timer).toHaveAttribute("data-size", "normal");
+    fireEvent.click(screen.getByRole("button", { name: "초시계 작게 보기" }));
+    expect(timer).toHaveAttribute("data-size", "compact");
+
+    const stage = timer.closest(".brushing-stage");
+    expect(stage).not.toBeNull();
+    vi.spyOn(stage as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      x: 0, y: 0, top: 0, left: 0, right: 320, bottom: 360,
+      width: 320, height: 360, toJSON: () => ({}),
+    });
+    fireEvent.pointerDown(timer, { clientX: 280, clientY: 40, pointerId: 1 });
+    fireEvent.pointerMove(timer, { clientX: 80, clientY: 180, pointerId: 1 });
+    fireEvent.pointerUp(timer, { clientX: 80, clientY: 180, pointerId: 1 });
+    expect(timer).toHaveStyle({ left: "25%", top: "50%" });
   });
 
   it("stops a camera stream that arrives after the screen unmounts", async () => {
@@ -282,7 +297,7 @@ describe("BrushingScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "60초" }));
     fireEvent.click(screen.getByRole("button", { name: "이 스킨으로 시작하기" }));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
-    fireEvent.click(screen.getByRole("button", { name: "인식 없이 시작하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "바로 시작하기" }));
     vi.spyOn(performance, "now").mockReturnValue(60_000);
     act(() => vi.advanceTimersByTime(60_000));
     act(() => {

@@ -57,22 +57,53 @@
   z-index: 1;
 }
 
-:global(.countdown) {
+:global(.adjustable-countdown) {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  z-index: 1;
-  padding: 10px 16px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
   border-radius: 999px;
   background: rgb(255 255 255 / 90%);
+  box-shadow: 0 8px 24px rgb(33 48 88 / 18%);
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
 }
 
-:global(.countdown strong) {
+:global(.adjustable-countdown:active) {
+  cursor: grabbing;
+}
+
+:global(.adjustable-countdown strong) {
   font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-:global(.countdown span) {
-  margin-left: 4px;
+:global(.adjustable-countdown[data-size="compact"] strong) {
+  font-size: 1.5rem;
+}
+
+:global(.timer-drag-handle) {
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+:global(.adjustable-countdown button) {
+  display: grid;
+  width: 32px;
+  min-height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(88 117 216 / 14%);
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 900;
 }
 
 :global(.completion-celebration) {

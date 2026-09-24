@@ -17,7 +17,6 @@ import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
 import { createMediaPipeFaceTracker } from "@/lib/face-tracking/mediapipe-face-tracker";
 import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
-import { createToothbrushLikeDetector, type ToothbrushLikeDetector } from "./toothbrush-like-detector";
 import {
   ChallengeSchema,
   StudentProgressSchema,
@@ -25,6 +24,7 @@ import {
 } from "@/shared/contracts";
 
 import { formatMinutesSeconds } from "./brushing-machine";
+import { AdjustableCountdown } from "./adjustable-countdown";
 import {
   createCompletionFeedback,
   type CompletionFeedback,
@@ -36,7 +36,6 @@ import {
 
 export type BrushingScreenServices = BrushingSessionServices & {
   createFaceTracker: () => FaceTracker;
-  createToothbrushLikeDetector: () => ToothbrushLikeDetector;
   completionFeedback: CompletionFeedback;
 };
 
@@ -55,7 +54,6 @@ function createBrowserServices(): BrushingScreenServices {
       { deviceToken },
     ),
     createFaceTracker: () => createMediaPipeFaceTracker(),
-    createToothbrushLikeDetector: () => createToothbrushLikeDetector(),
     completionFeedback: createCompletionFeedback(),
   };
 }
@@ -75,10 +73,6 @@ export function BrushingScreen({
   const [faceDetectedSec, setFaceDetectedSec] = useState<number | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
   const tracker = useMemo(() => activeServices.createFaceTracker(), [activeServices]);
-  const readinessDetector = useMemo(
-    () => activeServices.createToothbrushLikeDetector(),
-    [activeServices],
-  );
   const updateFaceDetectedSec = useCallback((seconds: number | null) => {
     setFaceDetectedSec(seconds);
   }, []);
@@ -192,16 +186,15 @@ export function BrushingScreen({
           elapsedSec={state.elapsedSec}
           onFaceDetectedSecChange={updateFaceDetectedSec}
           preparing={state.status === "preparing"}
-          readinessDetector={readinessDetector}
           onReady={beginBrushing}
         />
       ) : (
         <div className="timer-only">카메라 없이 타이머로 진행 중이에요.</div>
       )}
       {state.status !== "preparing" && (
-        <div className="countdown" aria-live="polite">
-          <strong>{formatMinutesSeconds(state.durationSec === "free" ? state.elapsedSec : state.remainingSec ?? 0)}</strong>
-        </div>
+        <AdjustableCountdown
+          value={formatMinutesSeconds(state.durationSec === "free" ? state.elapsedSec : state.remainingSec ?? 0)}
+        />
       )}
       {state.status === "readyToSubmit" && state.durationSec !== "free" && (
         <div className="completion-celebration" role="status" aria-label="양치 시간 완료 알림">
@@ -211,9 +204,9 @@ export function BrushingScreen({
       )}
       {state.status === "preparing" ? (
         <>
-          <p>칫솔을 입 가까이 보여주면 타이머가 시작돼요.</p>
+          <p>얼굴을 화면에 맞추면 자동으로 시작해요. 인식이 어려우면 바로 시작하세요.</p>
           <button type="button" className="primary-action" onClick={beginBrushing}>
-            인식 없이 시작하기
+            바로 시작하기
           </button>
         </>
       ) : <p>{state.status === "readyToSubmit" ? "양치 완료!" : "구석구석 꼼꼼하게 양치해요."}</p>}

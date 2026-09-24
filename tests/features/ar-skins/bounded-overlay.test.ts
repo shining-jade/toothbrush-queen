@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest";
 import { boundedOverlayStyle } from "@/features/ar-skins/bounded-overlay";
 
 describe("boundedOverlayStyle", () => {
-  it("shrinks and moves a wide skin fully inside a narrow portrait stage", () => {
+  it("keeps a close face centered while allowing the skin to grow beyond the stage", () => {
     expect(boundedOverlayStyle(
       { centerX: 0.5, centerY: 0.15, width: 0.8, rotationDeg: 0 },
       { anchorX: 0, anchorY: -0.4, scale: 1.5, rotationOffset: 0 },
       { width: 320, height: 568 },
       { width: 600, height: 300 },
       8,
-    )).toMatchObject({ left: "160px", top: "84px", width: "304px" });
+    )).toMatchObject({ left: "160px", top: "8px", width: "384px" });
   });
 
-  it("uses rotated bounds when clamping an extreme anchor", () => {
+  it("keeps an extreme rotated anchor attached to the visible face edge", () => {
     const style = boundedOverlayStyle(
       { centerX: 0.95, centerY: 0.1, width: 0.8, rotationDeg: 80 },
       { anchorX: 0.5, anchorY: -0.5, scale: 1, rotationOffset: 10 },
@@ -22,7 +22,7 @@ describe("boundedOverlayStyle", () => {
       8,
     );
 
-    expect(style).toMatchObject({ left: "248px", top: "136px", width: "256px" });
+    expect(style).toMatchObject({ left: "312px", top: "8px", width: "256px" });
     expect(style?.transform).toBe("translate3d(-50%, -50%, 0) rotate(90deg)");
   });
 

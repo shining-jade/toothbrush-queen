@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { CameraPreview } from "@/features/brushing-session/camera-preview";
 import type { FaceTracker } from "@/lib/face-tracking/face-tracker";
-import type { ToothbrushLikeDetector } from "@/features/brushing-session/toothbrush-like-detector";
 
 import { FacePresenceClock } from "./face-presence-clock";
 import { mapFacePoseToCover, mirrorPose, smoothFacePose, type FacePose } from "./face-pose";
@@ -19,7 +18,6 @@ export function ArCameraPreview({
   elapsedSec,
   onFaceDetectedSecChange,
   preparing = false,
-  readinessDetector,
   onReady,
 }: {
   stream: MediaStream;
@@ -28,14 +26,12 @@ export function ArCameraPreview({
   elapsedSec: number;
   onFaceDetectedSecChange: (seconds: number | null) => void;
   preparing?: boolean;
-  readinessDetector?: ToothbrushLikeDetector;
   onReady?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const elapsedRef = useRef(elapsedSec);
   const preparingRef = useRef(preparing);
-  const readinessDetectorRef = useRef(readinessDetector);
   const onReadyRef = useRef(onReady);
   const readinessCompleteRef = useRef(false);
   const faceClockRef = useRef(new FacePresenceClock());
@@ -52,13 +48,11 @@ export function ArCameraPreview({
 
   useEffect(() => {
     preparingRef.current = preparing;
-    readinessDetectorRef.current = readinessDetector;
     onReadyRef.current = onReady;
     readinessCompleteRef.current = false;
-    readinessDetector?.reset();
     faceClockRef.current = new FacePresenceClock();
     if (preparing) onFaceDetectedSecChange(0);
-  }, [onFaceDetectedSecChange, onReady, preparing, readinessDetector]);
+  }, [onFaceDetectedSecChange, onReady, preparing]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -105,17 +99,9 @@ export function ArCameraPreview({
         setPose(null);
       }
       if (preparingRef.current) {
-        if (!visible || !result.pose) {
-          readinessDetectorRef.current?.reset();
-        } else if (!readinessCompleteRef.current && videoRef.current && readinessDetectorRef.current) {
-          try {
-            if (readinessDetectorRef.current.observe(videoRef.current, result.pose, result.nowMs)) {
-              readinessCompleteRef.current = true;
-              onReadyRef.current?.();
-            }
-          } catch {
-            readinessDetectorRef.current.reset();
-          }
+        if (visible && !readinessCompleteRef.current) {
+          readinessCompleteRef.current = true;
+          onReadyRef.current?.();
         }
       } else {
         onFaceDetectedSecChange(faceClockRef.current.seconds(elapsedRef.current));
@@ -166,7 +152,7 @@ export function ArCameraPreview({
       {failed ? <p className={styles.message}>AR 효과 없이 계속 진행해요.</p>
         : preparing ? (
           <p className={styles.message}>
-            {detected ? "칫솔을 입 가까이 가져와 주세요." : "얼굴을 먼저 화면에 보여주세요."}
+            얼굴을 화면에 맞추면 자동으로 시작해요.
           </p>
         ) : !detected && (
           <p className={styles.message}>
