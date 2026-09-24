@@ -98,7 +98,7 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
       </section>
       <figure className="student-entry-illustration">
         <Image
-          src="/images/brushing-queen-student.png"
+          src="/images/brushing-queen-student-option-2.png"
           alt="왕관을 쓰고 즐겁게 양치하는 학생"
           width={1024}
           height={1536}

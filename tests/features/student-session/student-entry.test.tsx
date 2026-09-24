@@ -100,7 +100,7 @@ describe("StudentEntry", () => {
     const source = illustration.getAttribute("src");
     expect(source).not.toBeNull();
     expect(new URL(source ?? "", "http://localhost").searchParams.get("url")).toBe(
-      "/images/brushing-queen-student.png",
+      "/images/brushing-queen-student-option-2.png",
     );
   });
 
