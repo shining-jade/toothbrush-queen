@@ -47,7 +47,10 @@ export function StudentEntry({ challengeId, services }: StudentEntryProps) {
   if (state.status === "loading") {
     return (
       <section className="loading-panel">
-        <LoadingIndicator label="챌린지를 불러오고 있어요." />
+        <LoadingIndicator
+          label="챌린지를 불러오고 있어요."
+          progress={state.progress}
+        />
       </section>
     );
   }

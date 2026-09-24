@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StudentEntry } from "@/features/student-session/student-entry";
 import type { StudentSessionServices } from "@/features/student-session/use-student-session";
@@ -24,6 +24,12 @@ const progress = {
   targetDays: 5,
   completedToday: false,
 };
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => { resolve = next; });
+  return { promise, resolve };
+}
 
 function services(token: string | null): StudentSessionServices {
   let savedToken = token;
@@ -57,17 +63,64 @@ function services(token: string | null): StudentSessionServices {
       }),
     },
     now: () => new Date("2026-09-23T03:00:00Z"),
+    loadingHoldMs: 0,
   };
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("StudentEntry", () => {
-  it("shows a spinner while the challenge is loading", () => {
+  it("shows loading progress through 100 percent before revealing the entry form", async () => {
+    vi.useFakeTimers();
     const testServices = services(null);
-    testServices.api.request = vi.fn(() => new Promise(() => undefined));
+    testServices.loadingHoldMs = 220;
+    const challengeRequest = deferred<typeof challenge>();
+    testServices.api.request = vi.fn(() => challengeRequest.promise);
 
     render(<StudentEntry challengeId="ABC123" services={testServices} />);
 
-    expect(screen.getByRole("status", { name: "챌린지를 불러오고 있어요." })).toBeVisible();
+    expect(
+      screen.getByRole("progressbar", { name: "챌린지를 불러오고 있어요." }),
+    ).toHaveAttribute("aria-valuenow", "10");
+
+    act(() => vi.advanceTimersByTime(800));
+    expect(Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))).toBeGreaterThan(10);
+
+    await act(async () => challengeRequest.resolve(challenge));
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByText("100%")).toBeVisible();
+
+    await act(async () => vi.advanceTimersByTime(250));
+    expect(screen.getByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
+  });
+
+  it("loads the challenge and remembered student session in parallel", async () => {
+    const challengeRequest = deferred<typeof challenge>();
+    const resumeRequest = deferred<{ status: "authenticated"; progress: typeof progress }>();
+    const testServices = services("t".repeat(32));
+    testServices.api.request = vi.fn((action: string) => {
+      if (action === "challenge.get") return challengeRequest.promise;
+      if (action === "session.resume") return resumeRequest.promise;
+      throw new Error(`unexpected action: ${action}`);
+    });
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+    await act(async () => undefined);
+
+    expect(testServices.api.request).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(testServices.api.request).mock.calls.map(([action]) => action)).toEqual([
+      "challenge.get",
+      "session.resume",
+    ]);
+
+    await act(async () => {
+      challengeRequest.resolve(challenge);
+      resumeRequest.resolve({ status: "authenticated", progress });
+    });
+
+    expect(await screen.findByText("2학년 3반 12번 김○○ 학생으로 계속하기")).toBeVisible();
   });
 
   it("resumes and offers a different-student action", async () => {

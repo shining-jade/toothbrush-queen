@@ -16,7 +16,7 @@ import {
 } from "@/shared/contracts";
 
 export type StudentSessionState =
-  | { status: "loading" }
+  | { status: "loading"; progress: number }
   | { status: "needsIdentity"; challenge: Challenge }
   | {
       status: "authenticated";
@@ -41,56 +41,79 @@ export type StudentSessionServices = {
     clear: (challengeId: string) => void;
   };
   now?: () => Date;
+  loadingHoldMs?: number;
 };
 
 export function useStudentSession(
   challengeId: string,
   services: StudentSessionServices,
 ) {
-  const [state, setState] = useState<StudentSessionState>({ status: "loading" });
+  const [state, setState] = useState<StudentSessionState>({ status: "loading", progress: 10 });
   const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     let active = true;
-    let loadedChallenge: Challenge | null = null;
+    const advance = (progress: number) => setState((current) => current.status === "loading"
+      ? { ...current, progress: Math.max(current.progress, progress) }
+      : current);
+    const progressTimer = window.setInterval(() => {
+      setState((current) => current.status === "loading" && current.progress < 90
+        ? { ...current, progress: Math.min(90, current.progress + 6) }
+        : current);
+    }, 400);
 
     async function load() {
-      if (!ChallengeIdSchema.safeParse(challengeId).success) {
-        setState({ status: "error", code: "INVALID_CHALLENGE" });
-        return;
-      }
-
       try {
-        const challenge = (await services.api.request(
+        if (!ChallengeIdSchema.safeParse(challengeId).success) {
+          setState({ status: "error", code: "INVALID_CHALLENGE" });
+          return;
+        }
+
+        const deviceToken = services.sessionStore.get(challengeId);
+        const challengeRequest = services.api.request(
           "challenge.get",
           { challengeId },
           ChallengeSchema,
-        )) as Challenge;
-        loadedChallenge = challenge;
+        ).then((value) => {
+          if (active) advance(deviceToken ? 55 : 90);
+          return value as Challenge;
+        });
+        const resumeRequest = deviceToken
+          ? services.api.request(
+              "session.resume",
+              { challengeId },
+              ResumeStudentResultSchema,
+              { deviceToken },
+            ).then((value) => {
+              if (active) advance(85);
+              return ResumeStudentResultSchema.parse(value);
+            }).catch((error) => {
+              if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
+                return { status: "unauthenticated" as const };
+              }
+              throw error;
+            })
+          : Promise.resolve(null);
+        const [challenge, resumed] = await Promise.all([challengeRequest, resumeRequest]);
 
+        if (!active) return;
+        setState({ status: "loading", progress: 100 });
+        const loadingHoldMs = services.loadingHoldMs ?? 220;
+        if (loadingHoldMs > 0) {
+          await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
+        }
         if (!active) return;
         if (challenge.status === "draft") {
           setState({ status: "error", code: "INACTIVE_CHALLENGE" });
           return;
         }
 
-        const deviceToken = services.sessionStore.get(challengeId);
         if (!deviceToken) {
           setState({ status: "needsIdentity", challenge });
           return;
         }
 
-        const resumed = ResumeStudentResultSchema.parse(
-          await services.api.request(
-            "session.resume",
-            { challengeId },
-            ResumeStudentResultSchema,
-            { deviceToken },
-          ),
-        );
-
-        if (!active) return;
-        if (resumed.status === "unauthenticated") {
+        if (!resumed || resumed.status === "unauthenticated") {
           services.sessionStore.clear(challengeId);
           setState({ status: "needsIdentity", challenge });
           return;
@@ -106,22 +129,22 @@ export function useStudentSession(
         if (!active) return;
         if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
           services.sessionStore.clear(challengeId);
-          if (loadedChallenge) {
-            setState({ status: "needsIdentity", challenge: loadedChallenge });
-          }
-          else setState({ status: "error", code: error.code });
+          setState({ status: "error", code: error.code });
           return;
         }
         setState({
           status: "error",
           code: error instanceof ApiError ? error.code : "UNEXPECTED_ERROR",
         });
+      } finally {
+        window.clearInterval(progressTimer);
       }
     }
 
     void load();
     return () => {
       active = false;
+      window.clearInterval(progressTimer);
     };
   }, [challengeId, services]);
 
