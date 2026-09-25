@@ -9,14 +9,53 @@ type RequestOptions = {
   adminToken?: string;
 };
 
+type ClientOptions = {
+  retryDelayMs?: number;
+};
+
+const RETRYABLE_ACTIONS = new Set([
+  "challenge.get",
+  "session.resume",
+  "progress.get",
+  "brushing.start",
+]);
+
 export class AppsScriptClient {
-  constructor(private readonly endpoint: string) {}
+  constructor(
+    private readonly endpoint: string,
+    private readonly clientOptions: ClientOptions = {},
+  ) {}
 
   async request<T>(
     action: string,
     payload: unknown,
     responseSchema: z.ZodType<T>,
     options: RequestOptions = {},
+  ): Promise<T> {
+    const maxAttempts = RETRYABLE_ACTIONS.has(action) ? 3 : 1;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await this.requestOnce(action, payload, responseSchema, options);
+      } catch (error) {
+        const retryable = error instanceof ApiError
+          && error.code === "NETWORK_UNAVAILABLE"
+          && attempt < maxAttempts;
+        if (!retryable) throw error;
+        const retryDelayMs = this.clientOptions.retryDelayMs ?? 300;
+        if (retryDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
+        }
+      }
+    }
+
+    throw new ApiError("NETWORK_UNAVAILABLE", "네트워크 연결을 확인해 주세요.");
+  }
+
+  private async requestOnce<T>(
+    action: string,
+    payload: unknown,
+    responseSchema: z.ZodType<T>,
+    options: RequestOptions,
   ): Promise<T> {
     try {
       const response = await fetch(this.endpoint, {

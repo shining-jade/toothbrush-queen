@@ -50,6 +50,38 @@ describe("AppsScriptClient", () => {
     );
   });
 
+  it("automatically retries a temporary network failure while loading challenge data", async () => {
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError("temporary network failure"))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, data: challenge })));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new AppsScriptClient(
+      "https://script.google.com/macros/s/example/exec",
+      { retryDelayMs: 0 },
+    );
+
+    await expect(
+      client.request("challenge.get", { challengeId: "ABC123" }, ChallengeSchema),
+    ).resolves.toEqual(challenge);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("automatically retries a temporary network failure while starting brushing", async () => {
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError("temporary network failure"))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, data: challenge })));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new AppsScriptClient(
+      "https://script.google.com/macros/s/example/exec",
+      { retryDelayMs: 0 },
+    );
+
+    await expect(
+      client.request("brushing.start", {}, ChallengeSchema),
+    ).resolves.toEqual(challenge);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("attaches an administrator token without exposing it elsewhere", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true, data: challenge })),
