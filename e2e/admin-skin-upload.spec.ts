@@ -20,6 +20,7 @@ async function selectDraft(page: Page, filePath = "e2e/fixtures/flower-skin.png"
 
 test("administrator uploads, calibrates, activates, and exposes a skin", async ({ page }) => {
   await mockAppsScript(page, { adminPassword: "test-admin-password" });
+  await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
   await login(page);
   await selectDraft(page);
   await page.getByRole("button", { name: "저장하고 활성화" }).click();

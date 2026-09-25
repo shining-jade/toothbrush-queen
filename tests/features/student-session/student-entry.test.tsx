@@ -96,6 +96,38 @@ describe("StudentEntry", () => {
     expect(screen.getByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
   });
 
+  it("reveals the entry form immediately after the challenge request finishes by default", async () => {
+    vi.useFakeTimers();
+    const testServices = services(null);
+    delete testServices.loadingHoldMs;
+    const challengeRequest = deferred<typeof challenge>();
+    testServices.api.request = vi.fn(() => challengeRequest.promise);
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+    await act(async () => challengeRequest.resolve(challenge));
+
+    expect(screen.getByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
+  });
+
+  it("shows a recently cached challenge while the refresh request is still pending", async () => {
+    const testServices = services(null);
+    const challengeRequest = deferred<typeof challenge>();
+    testServices.api.request = vi.fn(() => challengeRequest.promise);
+    testServices.challengeCache = {
+      get: vi.fn(() => challenge),
+      set: vi.fn(),
+    };
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+
+    expect(screen.getByRole("button", { name: "챌린지 참여하기" })).toBeVisible();
+    expect(testServices.api.request).toHaveBeenCalledWith(
+      "challenge.get",
+      { challengeId: "ABC123" },
+      expect.anything(),
+    );
+  });
+
   it("shows the tooth-brushing queen illustration while the challenge loads", () => {
     const challengeRequest = deferred<typeof challenge>();
     const testServices = services(null);

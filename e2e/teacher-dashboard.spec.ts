@@ -9,11 +9,11 @@ test("teacher logs in, filters participation, saves settings, and gets a student
   await page.getByRole("button", { name: "로그인" }).click();
 
   await expect(page).toHaveURL(/\/admin\/dashboard$/);
-  await expect(page.getByRole("article", { name: "전체 학생" })).toContainText("3명");
+  await expect(page.getByRole("article", { name: "전체 참여자" })).toContainText("3명");
   await expect(page.getByRole("img", { name: "학생 참여 QR 코드" })).toBeVisible();
   await expect(page.getByLabel("학생 참여 링크")).toHaveValue(/\?challenge=BRUSH5$/);
 
-  await page.getByLabel("학년 필터").selectOption("3");
+  await page.getByLabel("구분·학년 필터").selectOption("3");
   await expect(page.getByText("박지우")).toBeVisible();
   await expect(page.getByText("김민지")).toBeHidden();
 
@@ -35,9 +35,9 @@ test("teacher permanently deletes a student after confirming", async ({ page }) 
     expect(dialog.message()).toContain("도장 기록, 소감, 자동로그인 정보");
     await dialog.accept();
   });
-  await page.getByRole("button", { name: "김민지 학생 삭제" }).click();
+  await page.getByRole("button", { name: "김민지 참여자 삭제" }).click();
 
-  await expect(page.getByRole("status")).toHaveText("김민지 학생과 모든 기록을 삭제했어요.");
-  await expect(page.getByRole("article", { name: "전체 학생" })).toContainText("2명");
-  await expect(page.getByRole("button", { name: "김민지 학생 삭제" })).toBeHidden();
+  await expect(page.getByRole("status")).toHaveText("김민지 참여자와 모든 기록을 삭제했어요.");
+  await expect(page.getByRole("article", { name: "전체 참여자" })).toContainText("2명");
+  await expect(page.getByRole("button", { name: "김민지 참여자 삭제" })).toBeHidden();
 });

@@ -5,6 +5,7 @@ import type { SkinCalibration } from "@/features/admin/skin-upload/skin-calibrat
 import type { FacePose } from "./face-pose";
 
 export type PixelSize = { width: number; height: number };
+const WEARABLE_SCALE_BOOST = 1.2;
 
 function px(value: number) {
   return `${Number(value.toFixed(4))}px`;
@@ -38,7 +39,7 @@ export function boundedOverlayStyle(
   const radians = Math.abs(rotationDeg) * Math.PI / 180;
   const cosine = Math.abs(Math.cos(radians));
   const sine = Math.abs(Math.sin(radians));
-  let width = pose.width * calibration.scale * stageSize.width;
+  let width = pose.width * calibration.scale * WEARABLE_SCALE_BOOST * stageSize.width;
   let height = width / aspectRatio;
   const rotatedWidth = cosine * width + sine * height;
   const rotatedHeight = sine * width + cosine * height;

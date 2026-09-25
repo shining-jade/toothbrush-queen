@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";
 
 import { ApiError } from "@/lib/api/api-error";
+import type { ChallengeCache } from "@/lib/challenge-cache/local-challenge-cache";
 import {
   ChallengeIdSchema,
   ChallengeSchema,
@@ -40,6 +41,7 @@ export type StudentSessionServices = {
     set: (challengeId: string, deviceToken: string) => void;
     clear: (challengeId: string) => void;
   };
+  challengeCache?: ChallengeCache;
   now?: () => Date;
   loadingHoldMs?: number;
 };
@@ -53,6 +55,7 @@ export function useStudentSession(
 
   useEffect(() => {
     let active = true;
+    let showingCachedIdentity = false;
     const advance = (progress: number) => setState((current) => current.status === "loading"
       ? { ...current, progress: Math.max(current.progress, progress) }
       : current);
@@ -70,11 +73,19 @@ export function useStudentSession(
         }
 
         const deviceToken = services.sessionStore.get(challengeId);
+        const cachedChallenge = services.challengeCache?.get(challengeId) ?? null;
+        showingCachedIdentity = Boolean(
+          cachedChallenge && cachedChallenge.status !== "draft" && !deviceToken,
+        );
+        if (showingCachedIdentity && cachedChallenge) {
+          setState({ status: "needsIdentity", challenge: cachedChallenge });
+        }
         const challengeRequest = services.api.request(
           "challenge.get",
           { challengeId },
           ChallengeSchema,
         ).then((value) => {
+          services.challengeCache?.set(value as Challenge);
           if (active) advance(deviceToken ? 55 : 90);
           return value as Challenge;
         });
@@ -97,10 +108,12 @@ export function useStudentSession(
         const [challenge, resumed] = await Promise.all([challengeRequest, resumeRequest]);
 
         if (!active) return;
-        setState({ status: "loading", progress: 100 });
-        const loadingHoldMs = services.loadingHoldMs ?? 220;
-        if (loadingHoldMs > 0) {
-          await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
+        const loadingHoldMs = services.loadingHoldMs ?? 0;
+        if (!showingCachedIdentity) {
+          setState({ status: "loading", progress: 100 });
+          if (loadingHoldMs > 0) {
+            await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
+          }
         }
         if (!active) return;
         if (challenge.status === "draft") {
@@ -109,7 +122,9 @@ export function useStudentSession(
         }
 
         if (!deviceToken) {
-          setState({ status: "needsIdentity", challenge });
+          setState((current) => current.status === "authenticated"
+            ? current
+            : { status: "needsIdentity", challenge });
           return;
         }
 
@@ -127,6 +142,7 @@ export function useStudentSession(
         });
       } catch (error) {
         if (!active) return;
+        if (showingCachedIdentity) return;
         if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
           services.sessionStore.clear(challengeId);
           setState({ status: "error", code: error.code });

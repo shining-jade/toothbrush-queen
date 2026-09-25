@@ -125,7 +125,7 @@ describe("ArCameraPreview", () => {
     }));
 
     const overlay = loadOverlay();
-    expect(overlay).toHaveStyle({ left: "192px", top: "156.2px", width: "120px" });
+    expect(overlay).toHaveStyle({ left: "192px", top: "156.2px", width: "144px" });
     expect(overlay.getAttribute("style")).toContain("rotate(-8deg)");
     unmount();
     expect(tracker.stop).toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe("ArCameraPreview", () => {
     await act(async () => undefined);
     act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 5 }, nowMs: 100 }));
     const overlay = loadOverlay();
-    expect(overlay).toHaveStyle({ left: "166.4px", top: "124.96px", width: "96px" });
+    expect(overlay).toHaveStyle({ left: "166.4px", top: "124.96px", width: "115.2px" });
     expect(overlay.getAttribute("style")).toContain("rotate(5deg)");
   });
 
@@ -158,7 +158,7 @@ describe("ArCameraPreview", () => {
     act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.5, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
     const overlay = loadOverlay(1200, 1200);
 
-    expect(overlay).toHaveStyle({ left: "160px", top: "257.115px", width: "227.2px" });
+    expect(overlay).toHaveStyle({ left: "160px", top: "257.115px", width: "272.64px" });
   });
 
   it("keeps the overlay hidden until measured and recomputes it after a mobile resize", async () => {
@@ -170,11 +170,11 @@ describe("ArCameraPreview", () => {
     const overlay = screen.getByTestId("ar-skin-overlay");
     expect(overlay).toHaveStyle({ visibility: "hidden" });
     loadOverlay();
-    expect(overlay).toHaveStyle({ left: "272px", width: "363.52px", visibility: "visible" });
+    expect(overlay).toHaveStyle({ left: "272px", width: "436.224px", visibility: "visible" });
 
     stageSize = { width: 430, height: 932 };
     act(() => resizeStage?.());
-    expect(overlay).toHaveStyle({ left: "365.5px", width: "488.48px" });
+    expect(overlay).toHaveStyle({ left: "365.5px", width: "586.176px" });
   });
 
   it("starts automatically when a face is detected without checking for a toothbrush", async () => {

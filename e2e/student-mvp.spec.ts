@@ -2,6 +2,17 @@ import { expect, test } from "@playwright/test";
 
 import { denyCamera, mockAppsScript } from "./fixtures/apps-script-mock";
 
+test("participant type choices remain compact on a mobile screen", async ({ page }) => {
+  await mockAppsScript(page);
+  await page.goto("/?challenge=ABC123");
+
+  const studentRadio = page.getByRole("radio", { name: "학생" });
+  const staffRadio = page.getByRole("radio", { name: "교직원" });
+  await expect(studentRadio).toHaveCSS("width", "18px");
+  await expect(staffRadio).toHaveCSS("width", "18px");
+  await expect(studentRadio.locator("..")).toHaveCSS("min-height", "40px");
+});
+
 async function joinAndStart(page: import("@playwright/test").Page) {
   await denyCamera(page);
   await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });

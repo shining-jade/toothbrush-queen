@@ -58,16 +58,14 @@
   grid-auto-flow: column;
   justify-content: center;
   align-items: center;
-  min-height: 48px;
-  padding: 10px 14px;
+  min-height: 40px;
+  padding: 6px 10px;
+  gap: 6px;
   border: 1px solid #cbd3e5;
   border-radius: 12px;
   background: #f8faff;
-}
-
-:global(.participant-type input) {
-  width: auto;
-  min-height: auto;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 :global(.identity-card input) {
@@ -76,6 +74,14 @@
   padding: 10px 12px;
   border: 1px solid #cbd3e5;
   border-radius: 12px;
+}
+
+:global(.identity-card .participant-type input[type="radio"]) {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  padding: 0;
 }
 
 :global(.student-entry) {

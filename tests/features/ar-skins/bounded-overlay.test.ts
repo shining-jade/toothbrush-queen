@@ -10,7 +10,7 @@ describe("boundedOverlayStyle", () => {
       { width: 320, height: 568 },
       { width: 600, height: 300 },
       8,
-    )).toMatchObject({ left: "160px", top: "8px", width: "384px" });
+    )).toMatchObject({ left: "160px", top: "8px", width: "460.8px" });
   });
 
   it("keeps an extreme rotated anchor attached to the visible face edge", () => {
@@ -22,7 +22,7 @@ describe("boundedOverlayStyle", () => {
       8,
     );
 
-    expect(style).toMatchObject({ left: "312px", top: "8px", width: "256px" });
+    expect(style).toMatchObject({ left: "312px", top: "8px", width: "307.2px" });
     expect(style?.transform).toBe("translate3d(-50%, -50%, 0) rotate(90deg)");
   });
 

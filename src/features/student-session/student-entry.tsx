@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { LoadingStory } from "@/components/loading-story";
 import { StudentDashboard } from "@/features/challenge/student-dashboard";
 import { AppsScriptClient } from "@/lib/api/apps-script-client";
+import { LocalChallengeCache } from "@/lib/challenge-cache/local-challenge-cache";
 import { getClientConfig } from "@/lib/config/client-env";
 import { DeviceSessionStore } from "@/lib/device-session/device-session-store";
 import {
@@ -26,6 +27,9 @@ function createBrowserServices(): StudentSessionServices {
   return {
     api: new AppsScriptClient(getClientConfig().appsScriptUrl),
     sessionStore: new DeviceSessionStore(),
+    challengeCache: new LocalChallengeCache(
+      typeof window === "undefined" ? null : window.localStorage,
+    ),
   };
 }
 
