@@ -46,6 +46,9 @@ function createBrowserServices(): BrushingScreenServices {
     camera: new CameraController(),
     api: client,
     sessionStore,
+    redirectToStudentEntry: (id) => {
+      window.location.replace(`/?challenge=${encodeURIComponent(id)}`);
+    },
     getChallenge: (id) => client.request("challenge.get", { challengeId: id }, ChallengeSchema),
     getProgress: (id, deviceToken) => client.request(
       "progress.get",
@@ -114,6 +117,14 @@ export function BrushingScreen({
           progress={state.progress}
           priority
         />
+      </section>
+    );
+  }
+
+  if (state.status === "recoveringSession") {
+    return (
+      <section className="brush-card" role="status">
+        학생 참여 화면으로 돌아가고 있어요.
       </section>
     );
   }

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BrushingScreen, type BrushingScreenServices } from "@/features/brushing-session/brushing-screen";
 import type { CompletionScreenServices } from "@/features/completion/completion-screen";
+import { ApiError } from "@/lib/api/api-error";
 import type { FaceTrackingResult } from "@/lib/face-tracking/face-tracker";
 
 const challenge = { challengeId: "ABC123", name: "5일 양치왕 챌린지", startDate: "2026-09-20", endDate: "2026-09-30", targetDays: 5, timeZone: "Asia/Seoul", durationMode: "choice" as const, dailyLimit: 1, status: "active" as const };
@@ -27,7 +28,11 @@ function services(mode: "camera" | "timer-only" = "timer-only") {
   const value: BrushingScreenServices = {
     camera: { start: vi.fn().mockResolvedValue({ mode, stream: resultStream }), stop: vi.fn(() => resultStream?.getTracks().forEach((item) => item.stop())) },
     api: { request: vi.fn().mockImplementation((_action, payload) => Promise.resolve({ attemptId: "attempt-1", attemptToken: "signed-attempt-token-1234567890", durationSec: (payload as { selectedDurationSec: 60 | 180 | "free" }).selectedDurationSec, issuedAtMs: 1 })) },
-    sessionStore: { get: vi.fn(() => "device-token-12345678901234567890") },
+    sessionStore: {
+      get: vi.fn(() => "device-token-12345678901234567890"),
+      clear: vi.fn(),
+    },
+    redirectToStudentEntry: vi.fn(),
     getChallenge: vi.fn().mockResolvedValue(challenge),
     getProgress: vi.fn().mockResolvedValue(progress),
     createFaceTracker: vi.fn(() => tracker),
@@ -152,6 +157,20 @@ describe("BrushingScreen", () => {
     expect(testServices.value.camera.start).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     expect(await screen.findByRole("button", { name: "60초" })).toBeVisible();
+  });
+
+  it("clears a stale device session and returns to student entry when progress authentication fails", async () => {
+    const testServices = services();
+    vi.mocked(testServices.value.getProgress).mockRejectedValue(
+      new ApiError("UNAUTHENTICATED", "인증이 필요합니다."),
+    );
+
+    render(<BrushingScreen challengeId="ABC123" services={testServices.value} />);
+
+    await screen.findByText("학생 참여 화면으로 돌아가고 있어요.");
+    expect(testServices.value.sessionStore.clear).toHaveBeenCalledWith("ABC123");
+    expect(testServices.value.redirectToStudentEntry).toHaveBeenCalledWith("ABC123");
+    expect(screen.queryByText("진행 상황을 불러오지 못했어요.")).toBeNull();
   });
 
   it("automatically applies the crown on the final day", async () => {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 
+import { ApiError } from "@/lib/api/api-error";
 import type { CameraStartResult } from "@/lib/camera/camera-controller";
 import {
   type Challenge,
@@ -29,7 +30,11 @@ export type BrushingSessionServices = {
       options?: { deviceToken?: string },
     ) => Promise<unknown>;
   };
-  sessionStore: { get: (challengeId: string) => string | null };
+  sessionStore: {
+    get: (challengeId: string) => string | null;
+    clear: (challengeId: string) => void;
+  };
+  redirectToStudentEntry: (challengeId: string) => void;
   getChallenge: (challengeId: string) => Promise<Challenge>;
   getProgress: (challengeId: string, deviceToken: string) => Promise<StudentProgress>;
   now?: () => number;
@@ -49,6 +54,7 @@ export type RunningSession = StartAttemptResult & {
 
 export type BrushingSessionState =
   | { status: "loadingProgress"; progress: number }
+  | { status: "recoveringSession" }
   | { status: "progressError" }
   | { status: "choosing"; challenge: Challenge; progress: StudentProgress }
   | { status: "choosingSkin"; mode: BrushingMode; challenge: Challenge; progress: StudentProgress }
@@ -95,8 +101,15 @@ export function useBrushingSession(
         await new Promise((resolve) => window.setTimeout(resolve, loadingHoldMs));
       }
       if (active) setState({ status: "choosing", challenge, progress });
-    }).catch(() => {
-      if (active) setState({ status: "progressError" });
+    }).catch((error) => {
+      if (!active) return;
+      if (error instanceof ApiError && error.code === "UNAUTHENTICATED") {
+        services.sessionStore.clear(challengeId);
+        setState({ status: "recoveringSession" });
+        services.redirectToStudentEntry(challengeId);
+        return;
+      }
+      setState({ status: "progressError" });
     });
     return () => { active = false; };
   }, [challengeId, preflightAttempt, services]);
