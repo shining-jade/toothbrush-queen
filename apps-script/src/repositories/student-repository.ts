@@ -13,6 +13,26 @@ export type StudentRow = {
 };
 
 const normalize = (value: string) => value.trim().normalize("NFC").toLocaleLowerCase("ko-KR");
+const normalizeNumericIdentity = (value: string) => {
+  const normalized = normalize(value);
+  return /^\d+$/.test(normalized)
+    ? normalized.replace(/^0+(?=\d)/, "")
+    : normalized;
+};
+
+const normalizeIdentity = (
+  challengeId: string,
+  grade: string,
+  classNo: string,
+  studentNo: string,
+  name: string,
+) => [
+  normalize(challengeId),
+  normalizeNumericIdentity(grade),
+  normalizeNumericIdentity(classNo),
+  normalizeNumericIdentity(studentNo),
+  normalize(name),
+];
 
 const toRow = (value: StudentRow): unknown[] => [
   value.studentId,
@@ -52,10 +72,15 @@ export class StudentRepository {
   }
 
   findByIdentity(challengeId: string, grade: string, classNo: string, studentNo: string, name: string) {
-    const identity = [challengeId, grade, classNo, studentNo, name].map(normalize);
+    const identity = normalizeIdentity(challengeId, grade, classNo, studentNo, name);
     const row = this.gateway.readAll("Students").find((candidate) =>
-      [candidate[1], candidate[2], candidate[3], candidate[4], candidate[5]]
-        .map((value) => normalize(String(value)))
+      normalizeIdentity(
+        String(candidate[1]),
+        String(candidate[2]),
+        String(candidate[3]),
+        String(candidate[4]),
+        String(candidate[5]),
+      )
         .every((value, index) => value === identity[index]),
     );
     return row ? fromRow(row) : null;

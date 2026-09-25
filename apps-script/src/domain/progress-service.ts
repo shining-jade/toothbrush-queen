@@ -1,4 +1,7 @@
-import type { StudentProgress } from "../../../src/shared/contracts";
+import {
+  STAFF_PARTICIPANT_GRADE,
+  type StudentProgress,
+} from "../../../src/shared/contracts";
 import type { ChallengeRepository } from "../repositories/challenge-repository";
 import type { CompletionRepository } from "../repositories/completion-repository";
 import type { StudentRepository } from "../repositories/student-repository";
@@ -29,10 +32,13 @@ export class ProgressService {
       .filter((completion) => completion.completed && completion.stampGranted);
     const acceptedDates = new Set(accepted.map((completion) => completion.participationDate));
     const today = this.formatDate(this.now(), challenge.timeZone);
+    const displayName = student.grade === STAFF_PARTICIPANT_GRADE
+      ? `교직원 · ${student.classNo} · ${maskName(student.name)}`
+      : `${student.grade}학년 ${student.classNo}반 ${student.studentNo}번 ${maskName(student.name)}`;
     return {
       challengeId,
       studentId,
-      displayName: `${student.grade}학년 ${student.classNo}반 ${student.studentNo}번 ${maskName(student.name)}`,
+      displayName,
       acceptedDays: acceptedDates.size,
       targetDays: challenge.targetDays,
       completedToday: acceptedDates.has(today),

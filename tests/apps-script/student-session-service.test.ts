@@ -69,6 +69,18 @@ describe("StudentSessionService", () => {
     expect(memory.readAll("Students")).toHaveLength(1);
   });
 
+  it("formats a staff participant with department and masked name", () => {
+    const result = service.join({
+      challengeId: "ABC123",
+      grade: "교직원",
+      classNo: "행정실",
+      studentNo: "-",
+      name: "김민지",
+    });
+
+    expect(result.progress.displayName).toBe("교직원 · 행정실 · 김○○");
+  });
+
   it.each(["", "bad-token"])(
     "returns unauthenticated for %s",
     (token) => {

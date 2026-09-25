@@ -39,6 +39,37 @@
   gap: 10px;
 }
 
+:global(.participant-type) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+:global(.participant-type legend) {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+
+:global(.participant-type label) {
+  display: flex;
+  grid-auto-flow: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid #cbd3e5;
+  border-radius: 12px;
+  background: #f8faff;
+}
+
+:global(.participant-type input) {
+  width: auto;
+  min-height: auto;
+}
+
 :global(.identity-card input) {
   width: 100%;
   min-height: 48px;

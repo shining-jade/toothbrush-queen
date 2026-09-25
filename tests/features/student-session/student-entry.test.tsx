@@ -137,17 +137,17 @@ describe("StudentEntry", () => {
       resumeRequest.resolve({ status: "authenticated", progress });
     });
 
-    expect(await screen.findByText("2학년 3반 12번 김○○ 학생으로 계속하기")).toBeVisible();
+    expect(await screen.findByText("2학년 3반 12번 김○○ 참여자로 계속하기")).toBeVisible();
   });
 
   it("resumes and offers a different-student action", async () => {
     render(<StudentEntry challengeId="ABC123" services={services("t".repeat(32))} />);
 
     expect(
-      await screen.findByText("2학년 3반 12번 김○○ 학생으로 계속하기"),
+      await screen.findByText("2학년 3반 12번 김○○ 참여자로 계속하기"),
     ).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "다른 학생으로 참여하기" }),
+      screen.getByRole("button", { name: "다른 참여자로 참여하기" }),
     ).toBeVisible();
   });
 
@@ -158,6 +158,40 @@ describe("StudentEntry", () => {
     for (const label of ["학년", "반", "번호", "이름"]) {
       expect(await screen.findByLabelText(label)).toBeVisible();
     }
+  });
+
+  it("lets staff join with only department and name", async () => {
+    const testServices = services(null);
+    const staffProgress = {
+      ...progress,
+      displayName: "교직원 · 행정실 · 김○○",
+    };
+    testServices.api.request = vi.fn(async (action: string, payload: unknown) => {
+      if (action === "challenge.get") return challenge;
+      if (action === "student.join") {
+        expect(payload).toEqual({
+          challengeId: "ABC123",
+          grade: "교직원",
+          classNo: "행정실",
+          studentNo: "-",
+          name: "김민지",
+        });
+        return { deviceToken: "a".repeat(32), progress: staffProgress };
+      }
+      throw new Error(`unexpected action: ${action}`);
+    });
+
+    render(<StudentEntry challengeId="ABC123" services={testServices} />);
+
+    fireEvent.click(await screen.findByRole("radio", { name: "교직원" }));
+    expect(screen.queryByLabelText("학년")).toBeNull();
+    expect(screen.queryByLabelText("반")).toBeNull();
+    expect(screen.queryByLabelText("번호")).toBeNull();
+    fireEvent.change(screen.getByLabelText("부서"), { target: { value: " 행정실 " } });
+    fireEvent.change(screen.getByLabelText("이름"), { target: { value: " 김민지 " } });
+    fireEvent.click(screen.getByRole("button", { name: "챌린지 참여하기" }));
+
+    expect(await screen.findByText("교직원 · 행정실 · 김○○ 참여자로 계속하기")).toBeVisible();
   });
 
   it("removes the tooth-brushing illustration after the entry form loads", async () => {
@@ -198,7 +232,7 @@ describe("StudentEntry", () => {
     render(<StudentEntry challengeId="ABC123" services={testServices} />);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "다른 학생으로 참여하기" }),
+      await screen.findByRole("button", { name: "다른 참여자로 참여하기" }),
     );
 
     await waitFor(() =>

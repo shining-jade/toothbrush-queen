@@ -2,6 +2,9 @@ import { z } from "zod";
 
 import type { BrushingMode } from "./brushing-mode";
 
+export const STAFF_PARTICIPANT_GRADE = "교직원";
+export const STAFF_PARTICIPANT_NUMBER = "-";
+
 export const BrushingModeSchema = z.union([
   z.literal(60),
   z.literal(180),

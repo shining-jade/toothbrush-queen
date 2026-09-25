@@ -44,6 +44,26 @@ describe("Sheets repositories", () => {
     );
   });
 
+  it("treats leading zeroes in grade, class, and student number as the same identity", () => {
+    const memory = new InMemorySheetGateway();
+    const repo = new StudentRepository(memory);
+    repo.insert({
+      studentId: "stu-zero",
+      challengeId: "ABC123",
+      grade: "2",
+      classNo: "1",
+      studentNo: "7",
+      name: "김민지",
+      createdAt: "2026-09-23T00:00:00.000Z",
+      updatedAt: "2026-09-23T00:00:00.000Z",
+      status: "active",
+    });
+
+    expect(repo.findByIdentity("ABC123", "02", "001", "007", "김민지")?.studentId).toBe(
+      "stu-zero",
+    );
+  });
+
   it("finds the original completion by idempotency key", () => {
     const memory = new InMemorySheetGateway();
     const repo = new CompletionRepository(memory);

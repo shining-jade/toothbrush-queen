@@ -4,10 +4,10 @@ import styles from "./teacher-dashboard.module.css";
 
 export function DashboardSummary({ summary }: { summary: AdminDashboardResult["summary"] }) {
   const cards = [
-    ["전체 학생", summary.totalStudents],
+    ["전체 참여자", summary.totalStudents],
     ["오늘 참여", summary.completedToday],
     ["오늘 미참여", summary.missingToday],
-    ["완주 학생", summary.completedChallenge],
+    ["완주 참여자", summary.completedChallenge],
   ] as const;
   return (
     <section className={styles.summaryGrid} aria-label="참여 요약">

@@ -17,18 +17,38 @@ describe("StudentParticipationTable", () => {
     expect(screen.getByRole("columnheader", { name: "스탬프 횟수" })).toBeVisible();
     expect(screen.getByText("스탬프 3 / 5개")).toBeVisible();
 
-    fireEvent.change(screen.getByLabelText("학년 필터"), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText("반 필터"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("구분·학년 필터"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("반·부서 필터"), { target: { value: "3" } });
     expect(screen.getByText("김민지")).toBeVisible();
     expect(screen.queryByText("이학생")).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("반 필터"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("반·부서 필터"), { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("참여 상태 필터"), { target: { value: "noRecord" } });
     expect(screen.getByText("이학생")).toBeVisible();
     expect(screen.queryByText("김민지")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("참여 상태 필터"), { target: { value: "" } });
-    fireEvent.change(screen.getByLabelText("학생 검색"), { target: { value: "7" } });
+    fireEvent.change(screen.getByLabelText("참여자 검색"), { target: { value: "7" } });
     expect(screen.getByText("이학생")).toBeVisible();
+  });
+
+  it("shows staff with a department instead of student grade fields", () => {
+    render(<StudentParticipationTable students={[{
+      studentId: "staff-1",
+      grade: "교직원",
+      classNo: "행정실",
+      studentNo: "-",
+      name: "김민지",
+      acceptedDays: 1,
+      targetDays: 5,
+      completedToday: true,
+      lastParticipationDate: "2026-09-23",
+      participationStatus: "completedToday",
+    }]} />);
+
+    expect(screen.getByText("교직원 · 행정실")).toBeVisible();
+    expect(screen.queryByText("교직원학년 행정실반 -번")).toBeNull();
+    expect(screen.getByRole("option", { name: "교직원" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "행정실" })).toBeVisible();
   });
 });

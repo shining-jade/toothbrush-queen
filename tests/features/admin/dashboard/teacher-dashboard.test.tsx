@@ -34,11 +34,11 @@ describe("TeacherDashboard", () => {
       });
     render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
 
-    expect(await screen.findByRole("article", { name: "전체 학생" })).toHaveTextContent("4명");
+    expect(await screen.findByRole("article", { name: "전체 참여자" })).toHaveTextContent("4명");
     expect(screen.getByText("양치의 여왕 교사 모드")).toBeVisible();
     expect(screen.getByRole("article", { name: "오늘 참여" })).toHaveTextContent("2명");
     expect(screen.getByRole("article", { name: "오늘 미참여" })).toHaveTextContent("2명");
-    expect(screen.getByRole("article", { name: "완주 학생" })).toHaveTextContent("1명");
+    expect(screen.getByRole("article", { name: "완주 참여자" })).toHaveTextContent("1명");
 
     expect(screen.getByRole("button", { name: "30일" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "20일" }));
@@ -52,7 +52,7 @@ describe("TeacherDashboard", () => {
     ));
     await vi.waitFor(() => expect(activeServices.loadDashboard).toHaveBeenCalledTimes(2));
     expect(await screen.findByText("챌린지 설정을 저장했어요.")).toBeVisible();
-    expect(screen.getByRole("article", { name: "완주 학생" })).toHaveTextContent("0명");
+    expect(screen.getByRole("article", { name: "완주 참여자" })).toHaveTextContent("0명");
   });
 
   it("returns to login without loading data when the admin session is missing", async () => {
@@ -76,13 +76,13 @@ describe("TeacherDashboard", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "김민지 학생 삭제" }));
+    fireEvent.click(await screen.findByRole("button", { name: "김민지 참여자 삭제" }));
 
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining("도장 기록, 소감, 자동로그인 정보"));
     await vi.waitFor(() => expect(activeServices.deleteStudent).toHaveBeenCalledWith(
       "a".repeat(32), "BRUSH5", "stu-1",
     ));
-    expect(await screen.findByText("김민지 학생과 모든 기록을 삭제했어요.")).toBeVisible();
+    expect(await screen.findByText("김민지 참여자와 모든 기록을 삭제했어요.")).toBeVisible();
     expect(screen.queryByText("김민지")).not.toBeInTheDocument();
     confirm.mockRestore();
   });

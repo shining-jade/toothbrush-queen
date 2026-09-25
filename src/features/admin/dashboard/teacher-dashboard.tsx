@@ -108,7 +108,7 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
 
   async function deleteStudent(student: AdminStudentSummary) {
     const confirmed = window.confirm(
-      `${student.name} 학생을 삭제할까요?\n\n학생 정보와 도장 기록, 소감, 자동로그인 정보가 모두 영구 삭제됩니다.`,
+      `${student.name} 참여자를 삭제할까요?\n\n참여자 정보와 도장 기록, 소감, 자동로그인 정보가 모두 영구 삭제됩니다.`,
     );
     if (!confirmed) return;
     const token = activeServices.getToken();
@@ -123,7 +123,7 @@ export function TeacherDashboard({ challengeId, services }: { challengeId: strin
       await activeServices.deleteStudent(token, challengeId, student.studentId);
       const refreshed = await activeServices.loadDashboard(token, challengeId);
       setDashboard(refreshed);
-      setMessage(`${student.name} 학생과 모든 기록을 삭제했어요.`);
+      setMessage(`${student.name} 참여자와 모든 기록을 삭제했어요.`);
     } catch (caught) {
       if (caught instanceof ApiError && caught.code === "ADMIN_SESSION_EXPIRED") {
         activeServices.navigate("/admin?returnTo=/admin/dashboard");
