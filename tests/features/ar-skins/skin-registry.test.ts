@@ -33,6 +33,27 @@ describe("AR skin registry", () => {
     ]);
   });
 
+  it("offers former animal hoods as compact headbands above the face", () => {
+    const headbandIds = [
+      "frog-hood",
+      "puppy-hood",
+      "hamster-hood",
+      "fox-hood",
+      "panda-hood",
+      "chick-hat",
+      "penguin-hood",
+    ];
+    const headbands = BASIC_SKINS.filter((skin) => headbandIds.includes(skin.id));
+
+    expect(headbands).toHaveLength(7);
+    for (const skin of headbands) {
+      expect(skin.label).toContain("머리띠");
+      expect(skin.src).toContain("headband");
+      expect(skin.calibration.anchorY).toBeLessThanOrEqual(-0.3);
+      expect(skin.calibration.scale).toBeLessThanOrEqual(1.35);
+    }
+  });
+
   it("keeps the student's choice before the final challenge day", () => {
     expect(resolveSessionSkin("rabbit", 3, 5)).toBe("rabbit");
   });

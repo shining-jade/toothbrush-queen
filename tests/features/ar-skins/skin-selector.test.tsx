@@ -16,7 +16,7 @@ describe("SkinSelector", () => {
 
     expect(onChange).toHaveBeenCalledWith("bubble-crown");
 
-    fireEvent.click(screen.getByRole("radio", { name: "복슬 강아지" }));
+    fireEvent.click(screen.getByRole("radio", { name: "복슬 강아지 머리띠" }));
     expect(onChange).toHaveBeenCalledWith("puppy-hood");
   });
 
