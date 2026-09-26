@@ -34,7 +34,7 @@ export const AR_SKINS = {
   "detective-glasses": { id: "detective-glasses", label: "동글 안경 탐정", src: "/ar-skins/detective-glasses.png", calibration: { anchorX: 0, anchorY: -0.02, scale: 1.2, rotationOffset: 0 }, bundled: true },
   "tooth-fairy": { id: "tooth-fairy", label: "반짝 치아 요정", src: "/ar-skins/tooth-fairy.png", calibration: { anchorX: 0, anchorY: -0.08, scale: 1.58, rotationOffset: 0 }, bundled: true },
   "frog-hood": { id: "frog-hood", label: "말랑 개구리 머리띠", src: "/ar-skins/frog-headband.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.28, rotationOffset: 0 }, bundled: true },
-  "photo-booth": { id: "photo-booth", label: "반짝 네컷", src: "/ar-skins/photo-booth.png", calibration: { anchorX: 0, anchorY: 0, scale: 1.75, rotationOffset: 0 }, bundled: true },
+  "photo-booth": { id: "photo-booth", label: "반짝 치아 티아라", src: "/ar-skins/tooth-tiara.png", calibration: { anchorX: 0, anchorY: -0.36, scale: 1.3, rotationOffset: 0 }, bundled: true },
   "puppy-hood": { id: "puppy-hood", label: "복슬 강아지 머리띠", src: "/ar-skins/puppy-headband.png", calibration: { anchorX: 0, anchorY: -0.32, scale: 1.3, rotationOffset: 0 }, bundled: true },
   "hamster-hood": { id: "hamster-hood", label: "볼빵빵 햄스터 머리띠", src: "/ar-skins/hamster-headband.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.28, rotationOffset: 0 }, bundled: true },
   "fox-hood": { id: "fox-hood", label: "새침 여우 머리띠", src: "/ar-skins/fox-headband.png", calibration: { anchorX: 0, anchorY: -0.34, scale: 1.28, rotationOffset: 0 }, bundled: true },

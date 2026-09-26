@@ -11,10 +11,6 @@ function px(value: number) {
   return `${Number(value.toFixed(4))}px`;
 }
 
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
 export function boundedOverlayStyle(
   pose: FacePose,
   calibration: SkinCalibration,
@@ -53,20 +49,10 @@ export function boundedOverlayStyle(
 
   const requestedX = (pose.centerX + pose.width * calibration.anchorX) * stageSize.width;
   const requestedY = (pose.centerY + pose.width * calibration.anchorY) * stageSize.height;
-  const centerX = clamp(
-    requestedX,
-    insetPx,
-    stageSize.width - insetPx,
-  );
-  const centerY = clamp(
-    requestedY,
-    insetPx,
-    stageSize.height - insetPx,
-  );
 
   return {
-    left: px(centerX),
-    top: px(centerY),
+    left: px(requestedX),
+    top: px(requestedY),
     width: px(width),
     transform: `translate3d(-50%, -50%, 0) rotate(${rotationDeg}deg)`,
     visibility: "visible",

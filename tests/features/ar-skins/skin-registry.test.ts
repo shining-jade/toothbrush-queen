@@ -54,6 +54,16 @@ describe("AR skin registry", () => {
     }
   });
 
+  it("offers a wearable tooth tiara instead of a full face photo frame", () => {
+    const wearable = BASIC_SKINS.find((skin) => skin.id === "photo-booth");
+
+    expect(wearable).toMatchObject({
+      label: "반짝 치아 티아라",
+      src: "/ar-skins/tooth-tiara.png",
+      calibration: { anchorY: -0.36 },
+    });
+  });
+
   it("keeps the student's choice before the final challenge day", () => {
     expect(resolveSessionSkin("rabbit", 3, 5)).toBe("rabbit");
   });
