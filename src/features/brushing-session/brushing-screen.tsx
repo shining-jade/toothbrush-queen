@@ -256,26 +256,30 @@ export function BrushingScreen({
           </>
         ) : (
           <div className="skin-preview-confirmation">
-            <p><strong>{sessionSkin.label}</strong> 스킨이 잘 어울리나요?</p>
-            <button
-              type="button"
-              className="primary-action"
-              onClick={() => setSkinPreviewConfirmed(true)}
-            >
-              {sessionSkin.label} 스킨으로 진행하기
-            </button>
-            {sessionSkin.id !== "crown" && (
+            <p aria-label={`${sessionSkin.label} 스킨이 잘 어울리나요?`}>이 스킨이 잘 어울리나요?</p>
+            <div className="skin-preview-actions">
               <button
                 type="button"
-                className="secondary-action"
-                onClick={() => {
-                  setSkinPreviewConfirmed(false);
-                  chooseAnotherSkin();
-                }}
+                className="primary-action"
+                aria-label={`${sessionSkin.label} 스킨으로 진행하기`}
+                onClick={() => setSkinPreviewConfirmed(true)}
               >
-                다른 스킨 고르기
+                이대로 진행
               </button>
-            )}
+              {sessionSkin.id !== "crown" && (
+                <button
+                  type="button"
+                  className="secondary-action"
+                  aria-label="다른 스킨 고르기"
+                  onClick={() => {
+                    setSkinPreviewConfirmed(false);
+                    chooseAnotherSkin();
+                  }}
+                >
+                  다른 스킨
+                </button>
+              )}
+            </div>
           </div>
         )
       ) : (

@@ -211,8 +211,9 @@ describe("BrushingScreen", () => {
     await reachPrivacyNotice(testServices);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "확인하고 시작하기" })));
 
-    expect(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "다른 스킨 고르기" })).toBeVisible();
+    expect(screen.getByText("이 스킨이 잘 어울리나요?")).toBeVisible();
+    expect(screen.getByRole("button", { name: "냥냥 볼터치 스킨으로 진행하기" })).toHaveTextContent("이대로 진행");
+    expect(screen.getByRole("button", { name: "다른 스킨 고르기" })).toHaveTextContent("다른 스킨");
     act(() => testServices.emit({
       detected: true,
       pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
