@@ -87,7 +87,7 @@ test("last challenge day forces the crown", async ({ page }) => {
   await mockAppsScript(page, { durationMode: "choice", acceptedDays: 4 });
   await page.clock.install({ time: new Date("2026-09-23T03:00:00Z") });
   await join(page);
-  await page.getByRole("button", { name: "60초" }).click();
+  await page.getByRole("button", { name: "1분" }).click();
   await expect(page.getByText("마지막 도전! 양치왕 왕관이 자동으로 적용돼요.")).toBeVisible();
   const crown = page.getByAltText("양치왕 왕관");
   await expect(crown).toBeVisible();
@@ -115,7 +115,7 @@ test("camera flow permits skin reselection, readiness skip, and fits mobile widt
   await joinWithCamera(page);
 
   await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
-  await page.getByRole("button", { name: "60초" }).click();
+  await page.getByRole("button", { name: "1분" }).click();
   await page.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
 

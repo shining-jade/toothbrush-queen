@@ -23,7 +23,7 @@ async function joinAndStart(page: import("@playwright/test").Page) {
   await page.getByLabel("이름").fill("김민지");
   await page.getByRole("button", { name: "챌린지 참여하기" }).click();
   await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
-  await page.getByRole("button", { name: "60초" }).click();
+  await page.getByRole("button", { name: "1분" }).click();
   await page.getByRole("radio", { name: "냥냥 볼터치" }).click();
   await page.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();

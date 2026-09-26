@@ -15,11 +15,16 @@
 
 :global(.duration-grid) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
 :global(.duration-grid button) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   min-height: 72px;
   border: 2px solid var(--primary);
   border-radius: 18px;
@@ -27,6 +32,17 @@
   color: var(--foreground);
   font-size: 1.25rem;
   font-weight: 800;
+}
+
+:global(.duration-grid button:only-child),
+:global(.duration-option-free) {
+  grid-column: 1 / -1;
+}
+
+:global(.duration-option-free small) {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 :global(.brushing-stage) {

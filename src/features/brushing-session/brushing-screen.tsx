@@ -113,7 +113,7 @@ export function BrushingScreen({
         <LoadingStory
           imageSrc="/images/brushing-queen-progress-check.png"
           imageAlt="도장판의 도장을 세어 보는 학생"
-          label="진행 상황을 확인하고 있어요."
+          label="양치 시간을 고를 준비를 하고 있어요."
           progress={state.progress}
           priority
         />
@@ -144,11 +144,18 @@ export function BrushingScreen({
       : ([state.challenge.durationMode] as const);
     return (
       <section className="brush-card">
-        <h1>오늘은 얼마나 양치할까요?</h1>
+        <h1>양치 시간을 골라볼까요?</h1>
         <div className="duration-grid">
           {choices.map((mode) => (
-            <button key={mode} type="button" onClick={() => chooseDuration(mode)}>
-              {mode === "free" ? "자유 양치" : `${mode}초`}
+            <button
+              key={mode}
+              type="button"
+              className={mode === "free" ? "duration-option duration-option-free" : "duration-option"}
+              aria-label={mode === "free" ? "자유 양치" : undefined}
+              onClick={() => chooseDuration(mode)}
+            >
+              <span>{mode === "free" ? "자유 양치" : mode === 60 ? "1분" : "3분"}</span>
+              {mode === "free" && <small aria-hidden="true">시간 제한 없이</small>}
             </button>
           ))}
         </div>
