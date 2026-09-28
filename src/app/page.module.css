@@ -144,3 +144,8 @@
   width: 100%;
   height: 14px;
 }
+
+:global(.attendance-action) {
+  display: grid;
+  gap: 18px;
+}

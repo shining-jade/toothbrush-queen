@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { StudentDashboard } from "@/features/challenge/student-dashboard";
@@ -39,7 +39,9 @@ describe("StudentDashboard", () => {
     expect(screen.getByText("2 / 5일")).toBeVisible();
     expect(screen.getByLabelText("도장판: 5일 중 2일 완료")).toBeVisible();
     expect(screen.getAllByRole("img")).toHaveLength(2);
-    expect(screen.getByRole("link", { name: "오늘의 양치 도전하기" })).toHaveAttribute(
+    const attendanceActions = screen.getByRole("group", { name: "나의 양치 출석판" });
+    expect(within(attendanceActions).getByLabelText("도장판: 5일 중 2일 완료")).toBeVisible();
+    expect(within(attendanceActions).getByRole("link", { name: "오늘의 양치 도전하기" })).toHaveAttribute(
       "href",
       "/brush?challenge=ABC123",
     );

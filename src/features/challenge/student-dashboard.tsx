@@ -31,10 +31,21 @@ export function StudentDashboard({
         </progress>
       </div>
 
-      <StampBoard
-        acceptedDays={progress.acceptedDays}
-        targetDays={progress.targetDays}
-      />
+      <div className="attendance-action" role="group" aria-label="나의 양치 출석판">
+        <StampBoard
+          acceptedDays={progress.acceptedDays}
+          targetDays={progress.targetDays}
+        />
+
+        {canStart && (
+          <Link
+            className="primary-action"
+            href={`/brush?challenge=${encodeURIComponent(challenge.challengeId)}`}
+          >
+            오늘의 양치 도전하기
+          </Link>
+        )}
+      </div>
 
       {phase === "upcoming" && <p className="status-copy">챌린지가 곧 시작돼요.</p>}
       {phase === "ended" && <p className="status-copy">챌린지가 종료되었어요.</p>}
@@ -50,15 +61,6 @@ export function StudentDashboard({
             다시 양치하기
           </Link>
         </div>
-      )}
-
-      {canStart && (
-        <Link
-          className="primary-action"
-          href={`/brush?challenge=${encodeURIComponent(challenge.challengeId)}`}
-        >
-          오늘의 양치 도전하기
-        </Link>
       )}
     </section>
   );
