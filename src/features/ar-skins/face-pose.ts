@@ -13,10 +13,16 @@ export type FacePose = {
 };
 
 const REQUIRED_INDICES = [33, 263, 10, 152, 234, 454] as const;
+// Typical forehead-to-chin height divided by cheek-to-cheek width of a frontal face.
+const FACE_HEIGHT_TO_WIDTH = 1.35;
 
+// Landmarks are normalized per axis, so distances and angles are measured after
+// scaling x by the video aspect ratio (videoWidth / videoHeight).
 export function facePoseFromLandmarks(
   landmarks: FaceLandmarkPoint[],
+  aspect = 1,
 ): FacePose | null {
+  if (!Number.isFinite(aspect) || aspect <= 0) return null;
   const points = REQUIRED_INDICES.map((index) => landmarks[index]);
   if (points.some((point) => !point || !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
     return null;
@@ -30,9 +36,13 @@ export function facePoseFromLandmarks(
     FaceLandmarkPoint,
     FaceLandmarkPoint,
   ];
-  const width = Math.hypot(rightEdge.x - leftEdge.x, rightEdge.y - leftEdge.y);
-  const height = Math.hypot(chin.x - forehead.x, chin.y - forehead.y);
-  if (width <= 0 || height <= 0) return null;
+  // Both results are fractions of the video's own axis: width of its x-axis, height of its y-axis.
+  const cheekWidth = Math.hypot((rightEdge.x - leftEdge.x) * aspect, rightEdge.y - leftEdge.y) / aspect;
+  const height = Math.hypot((chin.x - forehead.x) * aspect, chin.y - forehead.y);
+  if (cheekWidth <= 0 || height <= 0) return null;
+  // Turning the head shrinks the cheek width but not the face height, so follow the larger
+  // of the two to keep the skin size steady when the face yaws.
+  const width = Math.max(cheekWidth, height / FACE_HEIGHT_TO_WIDTH / aspect);
 
   return {
     centerX: (leftEdge.x + rightEdge.x) / 2,
@@ -43,7 +53,7 @@ export function facePoseFromLandmarks(
     eyeCenterY: (leftEye.y + rightEye.y) / 2,
     foreheadX: forehead.x,
     foreheadY: forehead.y,
-    rotationDeg: Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x) * 180 / Math.PI,
+    rotationDeg: Math.atan2(rightEye.y - leftEye.y, (rightEye.x - leftEye.x) * aspect) * 180 / Math.PI,
   };
 }
 

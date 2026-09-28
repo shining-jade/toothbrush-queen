@@ -35,6 +35,42 @@ function makeLandmarks({
 }
 
 describe("face pose", () => {
+  it("measures rotation and size in pixels for a non-square video", () => {
+    const landmarks = makeLandmarks({
+      leftEye: [0.4, 0.5],
+      rightEye: [0.6, 0.5 + 0.2 * (16 / 9) * Math.tan(10 * Math.PI / 180)],
+      forehead: [0.5, 0.3],
+      chin: [0.5, 0.7],
+      leftEdge: [0.3, 0.5],
+      rightEdge: [0.7, 0.5],
+    });
+    const pose = facePoseFromLandmarks(landmarks, 16 / 9);
+
+    // The eye line is 0.2 wide and ~0.063 tall in normalized units: 10 degrees in real pixels.
+    expect(pose?.rotationDeg).toBeCloseTo(10, 1);
+    expect(pose?.height).toBeCloseTo(0.4, 5);
+  });
+
+  it("keeps the face width steady when the head turns and the cheeks narrow", () => {
+    const turned = facePoseFromLandmarks(makeLandmarks({
+      leftEye: [0.4, 0.4],
+      rightEye: [0.6, 0.4],
+      forehead: [0.5, 0.2],
+      chin: [0.5, 0.8],
+      leftEdge: [0.4, 0.5],
+      rightEdge: [0.6, 0.5],
+    }));
+
+    expect(turned?.width).toBeCloseTo(0.6 / 1.35, 5);
+  });
+
+  it("rejects an invalid aspect ratio", () => {
+    expect(facePoseFromLandmarks(makeLandmarks({
+      leftEye: [0.3, 0.4], rightEye: [0.7, 0.4], forehead: [0.5, 0.2],
+      chin: [0.5, 0.8], leftEdge: [0.2, 0.5], rightEdge: [0.8, 0.5],
+    }), 0)).toBeNull();
+  });
+
   it("derives a centered width and eye-line rotation from face landmarks", () => {
     const pose = facePoseFromLandmarks(makeLandmarks({
       leftEye: [0.3, 0.4],

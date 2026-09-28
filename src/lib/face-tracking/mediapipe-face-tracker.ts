@@ -77,7 +77,10 @@ export function createMediaPipeFaceTracker(
         ) {
           try {
             const result = landmarker.detectForVideo(video, nowMs);
-            const pose = facePoseFromLandmarks(result.faceLandmarks[0] ?? []);
+            const pose = facePoseFromLandmarks(
+              result.faceLandmarks[0] ?? [],
+              video.videoWidth / video.videoHeight,
+            );
             lastInferenceMs = nowMs;
             onResult({ pose, detected: pose !== null, nowMs });
           } catch (error) {
