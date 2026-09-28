@@ -127,7 +127,7 @@ export function ArCameraPreview({
     ? mapFacePoseToCover(pose, stageSize, videoSize)
     : pose;
   const style = displayPose && stageSize && imageSize
-    ? boundedOverlayStyle(displayPose, skin.calibration, stageSize, imageSize, 8)
+    ? boundedOverlayStyle(displayPose, skin.calibration, stageSize, imageSize, 8, skin.placement)
     : null;
 
   return (

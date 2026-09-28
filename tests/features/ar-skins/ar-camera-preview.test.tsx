@@ -25,6 +25,16 @@ function fixture() {
 let resizeStage: (() => void) | undefined;
 let stageSize = { width: 320, height: 568 };
 
+function facePose(overrides: Partial<FaceTrackingResult["pose"] & object> = {}) {
+  return {
+    centerX: 0.5, centerY: 0.3, width: 0.2, height: 0.3,
+    eyeCenterX: 0.5, eyeCenterY: 0.26,
+    foreheadX: 0.5, foreheadY: 0.14,
+    rotationDeg: 0,
+    ...overrides,
+  };
+}
+
 function loadOverlay(width = 600, height = 300) {
   const overlay = screen.getByTestId("ar-skin-overlay");
   Object.defineProperties(overlay, {
@@ -73,7 +83,7 @@ describe("ArCameraPreview", () => {
 
     act(() => emit({
       detected: true,
-      pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 },
+      pose: facePose(),
       nowMs: 100,
     }));
     expect(loadOverlay()).toBeVisible();
@@ -120,12 +130,12 @@ describe("ArCameraPreview", () => {
     await act(async () => undefined);
     act(() => emit({
       detected: true,
-      pose: { centerX: 0.4, centerY: 0.3, width: 0.25, rotationDeg: 8 },
+      pose: facePose({ centerX: 0.4, width: 0.25, height: 0.35, rotationDeg: 8 }),
       nowMs: 100,
     }));
 
     const overlay = loadOverlay();
-    expect(overlay).toHaveStyle({ left: "192px", top: "156.2px", width: "144px" });
+    expect(overlay).toHaveStyle({ left: "192px", top: "140.58px", width: "144px" });
     expect(overlay.getAttribute("style")).toContain("rotate(-8deg)");
     unmount();
     expect(tracker.stop).toHaveBeenCalled();
@@ -139,7 +149,7 @@ describe("ArCameraPreview", () => {
     }]).find((skin) => skin.id === "skin-flower-1")!;
     render(<ArCameraPreview stream={{} as MediaStream} skin={remote} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
     await act(async () => undefined);
-    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 5 }, nowMs: 100 }));
+    act(() => emit({ detected: true, pose: facePose({ rotationDeg: 5 }), nowMs: 100 }));
     const overlay = loadOverlay();
     expect(overlay).toHaveStyle({ left: "166.4px", top: "124.96px", width: "115.2px" });
     expect(overlay.getAttribute("style")).toContain("rotate(5deg)");
@@ -155,17 +165,17 @@ describe("ArCameraPreview", () => {
       videoHeight: { configurable: true, value: 480 },
     });
 
-    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.5, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
+    act(() => emit({ detected: true, pose: facePose({ centerY: 0.5 }), nowMs: 100 }));
     const overlay = loadOverlay(1200, 1200);
 
-    expect(overlay).toHaveStyle({ left: "160px", top: "257.115px", width: "272.64px" });
+    expect(overlay).toHaveStyle({ left: "160px", top: "258.44px", width: "272.64px" });
   });
 
   it("keeps the overlay hidden until measured and recomputes it after a mobile resize", async () => {
     const { tracker, emit } = fixture();
     render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.cat} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} />);
     await act(async () => undefined);
-    act(() => emit({ detected: true, pose: { centerX: 0.15, centerY: 0.1, width: 0.8, rotationDeg: 0 }, nowMs: 100 }));
+    act(() => emit({ detected: true, pose: facePose({ centerX: 0.15, centerY: 0.1, width: 0.8, height: 0.7 }), nowMs: 100 }));
 
     const overlay = screen.getByTestId("ar-skin-overlay");
     expect(overlay).toHaveStyle({ visibility: "hidden" });
@@ -194,10 +204,10 @@ describe("ArCameraPreview", () => {
     await act(async () => undefined);
     expect(screen.getByText("얼굴을 화면에 맞추면 자동으로 시작해요.")).toBeVisible();
 
-    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.2, rotationDeg: 0 }, nowMs: 100 }));
+    act(() => emit({ detected: true, pose: facePose(), nowMs: 100 }));
     expect(onReady).toHaveBeenCalledOnce();
 
-    act(() => emit({ detected: true, pose: { centerX: 0.5, centerY: 0.3, width: 0.3, rotationDeg: 0 }, nowMs: 900 }));
+    act(() => emit({ detected: true, pose: facePose({ width: 0.3, height: 0.4 }), nowMs: 900 }));
     expect(onReady).toHaveBeenCalledOnce();
   });
 });

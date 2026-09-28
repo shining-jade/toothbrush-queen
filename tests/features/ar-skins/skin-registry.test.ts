@@ -21,6 +21,7 @@ describe("AR skin registry", () => {
       "skin-flower-1",
     ]);
     expect(catalog[15]).toMatchObject({ label: "꽃님 사진관", bundled: false, calibration: { scale: 1.5 } });
+    expect(catalog[15].placement).toBeUndefined();
   });
 
   it("offers animal and original brushing-themed skins in display order", () => {
@@ -49,7 +50,7 @@ describe("AR skin registry", () => {
     for (const skin of headbands) {
       expect(skin.label).toContain("머리띠");
       expect(skin.src).toContain("headband");
-      expect(skin.calibration.anchorY).toBeLessThanOrEqual(-0.3);
+      expect(skin.placement).toBe("forehead");
       expect(skin.calibration.scale).toBeLessThanOrEqual(1.35);
     }
   });
@@ -60,8 +61,21 @@ describe("AR skin registry", () => {
     expect(wearable).toMatchObject({
       label: "반짝 치아 티아라",
       src: "/ar-skins/tooth-tiara.png",
-      calibration: { anchorY: -0.36 },
+      placement: "forehead",
+      calibration: { anchorY: 0.14 },
     });
+  });
+
+  it("assigns each bundled skin to the relevant facial landmark", () => {
+    expect(BASIC_SKINS.filter((skin) => skin.placement === "face").map((skin) => skin.id))
+      .toEqual(["cat", "rabbit", "bear", "tooth-fairy"]);
+    expect(BASIC_SKINS.filter((skin) => skin.placement === "eyes").map((skin) => skin.id))
+      .toEqual(["detective-glasses"]);
+    expect(BASIC_SKINS.filter((skin) => skin.placement === "forehead").map((skin) => skin.id))
+      .toEqual([
+        "bubble-crown", "toothpaste-hat", "frog-hood", "photo-booth",
+        "puppy-hood", "hamster-hood", "fox-hood", "panda-hood", "chick-hat", "penguin-hood",
+      ]);
   });
 
   it("keeps the student's choice before the final challenge day", () => {

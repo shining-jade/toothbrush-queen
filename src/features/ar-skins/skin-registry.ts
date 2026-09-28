@@ -17,31 +17,33 @@ export type BasicSkinId =
   | "chick-hat"
   | "penguin-hood";
 export type ArSkinId = string;
+export type SkinPlacement = "face" | "eyes" | "forehead";
 export type ArSkin = {
   id: string;
   label: string;
   src: string;
   calibration: { anchorX: number; anchorY: number; scale: number; rotationOffset: number };
+  placement?: SkinPlacement;
   bundled: boolean;
 };
 
 export const AR_SKINS = {
-  cat: { id: "cat", label: "냥냥 볼터치", src: "/ar-skins/cat.png", calibration: { anchorX: 0, anchorY: -0.1, scale: 1.42, rotationOffset: 0 }, bundled: true },
-  rabbit: { id: "rabbit", label: "반짝 토끼", src: "/ar-skins/rabbit.png", calibration: { anchorX: 0, anchorY: -0.1, scale: 1.5, rotationOffset: 0 }, bundled: true },
-  bear: { id: "bear", label: "하트 곰돌이", src: "/ar-skins/bear.png", calibration: { anchorX: 0, anchorY: -0.08, scale: 1.4, rotationOffset: 0 }, bundled: true },
-  "bubble-crown": { id: "bubble-crown", label: "몽글 거품 왕관", src: "/ar-skins/bubble-crown.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.42, rotationOffset: 0 }, bundled: true },
-  "toothpaste-hat": { id: "toothpaste-hat", label: "치약 크림 모자", src: "/ar-skins/toothpaste-hat.png", calibration: { anchorX: 0, anchorY: -0.42, scale: 1.22, rotationOffset: 0 }, bundled: true },
-  "detective-glasses": { id: "detective-glasses", label: "동글 안경 탐정", src: "/ar-skins/detective-glasses.png", calibration: { anchorX: 0, anchorY: -0.02, scale: 1.2, rotationOffset: 0 }, bundled: true },
-  "tooth-fairy": { id: "tooth-fairy", label: "반짝 치아 요정", src: "/ar-skins/tooth-fairy.png", calibration: { anchorX: 0, anchorY: -0.08, scale: 1.58, rotationOffset: 0 }, bundled: true },
-  "frog-hood": { id: "frog-hood", label: "말랑 개구리 머리띠", src: "/ar-skins/frog-headband.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.28, rotationOffset: 0 }, bundled: true },
-  "photo-booth": { id: "photo-booth", label: "반짝 치아 티아라", src: "/ar-skins/tooth-tiara.png", calibration: { anchorX: 0, anchorY: -0.36, scale: 1.3, rotationOffset: 0 }, bundled: true },
-  "puppy-hood": { id: "puppy-hood", label: "복슬 강아지 머리띠", src: "/ar-skins/puppy-headband.png", calibration: { anchorX: 0, anchorY: -0.32, scale: 1.3, rotationOffset: 0 }, bundled: true },
-  "hamster-hood": { id: "hamster-hood", label: "볼빵빵 햄스터 머리띠", src: "/ar-skins/hamster-headband.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.28, rotationOffset: 0 }, bundled: true },
-  "fox-hood": { id: "fox-hood", label: "새침 여우 머리띠", src: "/ar-skins/fox-headband.png", calibration: { anchorX: 0, anchorY: -0.34, scale: 1.28, rotationOffset: 0 }, bundled: true },
-  "panda-hood": { id: "panda-hood", label: "말랑 판다 머리띠", src: "/ar-skins/panda-headband.png", calibration: { anchorX: 0, anchorY: -0.33, scale: 1.28, rotationOffset: 0 }, bundled: true },
-  "chick-hat": { id: "chick-hat", label: "노랑 병아리 머리띠", src: "/ar-skins/chick-headband.png", calibration: { anchorX: 0, anchorY: -0.31, scale: 1.3, rotationOffset: 0 }, bundled: true },
-  "penguin-hood": { id: "penguin-hood", label: "포근 펭귄 머리띠", src: "/ar-skins/penguin-headband.png", calibration: { anchorX: 0, anchorY: -0.32, scale: 1.3, rotationOffset: 0 }, bundled: true },
-  crown: { id: "crown", label: "양치왕 왕관", src: "/ar-skins/crown.png", calibration: { anchorX: 0, anchorY: -0.5, scale: 1.28, rotationOffset: 0 }, bundled: true },
+  cat: { id: "cat", label: "냥냥 볼터치", src: "/ar-skins/cat.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.15, scale: 1.42, rotationOffset: 0 }, bundled: true },
+  rabbit: { id: "rabbit", label: "반짝 토끼", src: "/ar-skins/rabbit.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.15, scale: 1.5, rotationOffset: 0 }, bundled: true },
+  bear: { id: "bear", label: "하트 곰돌이", src: "/ar-skins/bear.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.14, scale: 1.4, rotationOffset: 0 }, bundled: true },
+  "bubble-crown": { id: "bubble-crown", label: "몽글 거품 왕관", src: "/ar-skins/bubble-crown.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.17, scale: 1.42, rotationOffset: 0 }, bundled: true },
+  "toothpaste-hat": { id: "toothpaste-hat", label: "치약 크림 모자", src: "/ar-skins/toothpaste-hat.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.08, scale: 1.22, rotationOffset: 0 }, bundled: true },
+  "detective-glasses": { id: "detective-glasses", label: "동글 안경 탐정", src: "/ar-skins/detective-glasses.png", placement: "eyes", calibration: { anchorX: 0, anchorY: 0, scale: 1.2, rotationOffset: 0 }, bundled: true },
+  "tooth-fairy": { id: "tooth-fairy", label: "반짝 치아 요정", src: "/ar-skins/tooth-fairy.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.08, scale: 1.58, rotationOffset: 0 }, bundled: true },
+  "frog-hood": { id: "frog-hood", label: "말랑 개구리 머리띠", src: "/ar-skins/frog-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.17, scale: 1.28, rotationOffset: 0 }, bundled: true },
+  "photo-booth": { id: "photo-booth", label: "반짝 치아 티아라", src: "/ar-skins/tooth-tiara.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.14, scale: 1.3, rotationOffset: 0 }, bundled: true },
+  "puppy-hood": { id: "puppy-hood", label: "복슬 강아지 머리띠", src: "/ar-skins/puppy-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.18, scale: 1.3, rotationOffset: 0 }, bundled: true },
+  "hamster-hood": { id: "hamster-hood", label: "볼빵빵 햄스터 머리띠", src: "/ar-skins/hamster-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.17, scale: 1.28, rotationOffset: 0 }, bundled: true },
+  "fox-hood": { id: "fox-hood", label: "새침 여우 머리띠", src: "/ar-skins/fox-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.16, scale: 1.28, rotationOffset: 0 }, bundled: true },
+  "panda-hood": { id: "panda-hood", label: "말랑 판다 머리띠", src: "/ar-skins/panda-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.17, scale: 1.28, rotationOffset: 0 }, bundled: true },
+  "chick-hat": { id: "chick-hat", label: "노랑 병아리 머리띠", src: "/ar-skins/chick-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.19, scale: 1.3, rotationOffset: 0 }, bundled: true },
+  "penguin-hood": { id: "penguin-hood", label: "포근 펭귄 머리띠", src: "/ar-skins/penguin-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.18, scale: 1.3, rotationOffset: 0 }, bundled: true },
+  crown: { id: "crown", label: "양치왕 왕관", src: "/ar-skins/crown.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0, scale: 1.28, rotationOffset: 0 }, bundled: true },
 } as const satisfies Record<BasicSkinId | "crown", ArSkin>;
 
 export const BASIC_SKINS: ArSkin[] = [

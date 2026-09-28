@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import type { SkinCalibration } from "@/features/admin/skin-upload/skin-calibration";
 
 import type { FacePose } from "./face-pose";
+import type { SkinPlacement } from "./skin-registry";
 
 export type PixelSize = { width: number; height: number };
 const WEARABLE_SCALE_BOOST = 1.2;
@@ -17,6 +18,7 @@ export function boundedOverlayStyle(
   stageSize: PixelSize,
   imageSize: PixelSize,
   insetPx = 8,
+  placement?: SkinPlacement,
 ): CSSProperties | null {
   const values = [
     pose.centerX, pose.centerY, pose.width, pose.rotationDeg,
@@ -47,8 +49,20 @@ export function boundedOverlayStyle(
   width *= fitScale;
   height *= fitScale;
 
-  const requestedX = (pose.centerX + pose.width * calibration.anchorX) * stageSize.width;
-  const requestedY = (pose.centerY + pose.width * calibration.anchorY) * stageSize.height;
+  const baseX = placement === "eyes"
+    ? pose.eyeCenterX
+    : placement === "forehead" ? pose.foreheadX : pose.centerX;
+  const baseY = placement === "eyes"
+    ? pose.eyeCenterY
+    : placement === "forehead" ? pose.foreheadY : pose.centerY;
+  const verticalScale = placement ? pose.height : pose.width;
+  if (
+    baseX === undefined || baseY === undefined || verticalScale === undefined
+    || ![baseX, baseY, verticalScale].every(Number.isFinite) || verticalScale <= 0
+  ) return null;
+
+  const requestedX = (baseX + pose.width * calibration.anchorX) * stageSize.width;
+  const requestedY = (baseY + verticalScale * calibration.anchorY) * stageSize.height;
 
   return {
     left: px(requestedX),

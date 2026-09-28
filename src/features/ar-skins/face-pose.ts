@@ -4,6 +4,11 @@ export type FacePose = {
   centerX: number;
   centerY: number;
   width: number;
+  height?: number;
+  eyeCenterX?: number;
+  eyeCenterY?: number;
+  foreheadX?: number;
+  foreheadY?: number;
   rotationDeg: number;
 };
 
@@ -26,12 +31,18 @@ export function facePoseFromLandmarks(
     FaceLandmarkPoint,
   ];
   const width = Math.hypot(rightEdge.x - leftEdge.x, rightEdge.y - leftEdge.y);
-  if (width <= 0) return null;
+  const height = Math.hypot(chin.x - forehead.x, chin.y - forehead.y);
+  if (width <= 0 || height <= 0) return null;
 
   return {
     centerX: (leftEdge.x + rightEdge.x) / 2,
     centerY: (forehead.y + chin.y) / 2,
     width,
+    height,
+    eyeCenterX: (leftEye.x + rightEye.x) / 2,
+    eyeCenterY: (leftEye.y + rightEye.y) / 2,
+    foreheadX: forehead.x,
+    foreheadY: forehead.y,
     rotationDeg: Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x) * 180 / Math.PI,
   };
 }
@@ -40,6 +51,8 @@ export function mirrorPose(pose: FacePose): FacePose {
   return {
     ...pose,
     centerX: 1 - pose.centerX,
+    eyeCenterX: pose.eyeCenterX === undefined ? undefined : 1 - pose.eyeCenterX,
+    foreheadX: pose.foreheadX === undefined ? undefined : 1 - pose.foreheadX,
     rotationDeg: -pose.rotationDeg,
   };
 }
@@ -63,10 +76,20 @@ export function smoothFacePose(
   ));
   const blend = alpha ?? adaptiveAlpha;
   const mix = (from: number, to: number) => from + (to - from) * blend;
+  const mixOptional = (from: number | undefined, to: number | undefined) => {
+    if (from === undefined) return to;
+    if (to === undefined) return from;
+    return mix(from, to);
+  };
   return {
     centerX: mix(previous.centerX, next.centerX),
     centerY: mix(previous.centerY, next.centerY),
     width: mix(previous.width, next.width),
+    height: mixOptional(previous.height, next.height),
+    eyeCenterX: mixOptional(previous.eyeCenterX, next.eyeCenterX),
+    eyeCenterY: mixOptional(previous.eyeCenterY, next.eyeCenterY),
+    foreheadX: mixOptional(previous.foreheadX, next.foreheadX),
+    foreheadY: mixOptional(previous.foreheadY, next.foreheadY),
     rotationDeg: mix(previous.rotationDeg, next.rotationDeg),
   };
 }
@@ -89,11 +112,18 @@ export function mapFacePoseToCover(
   const displayedHeight = videoSize.height * coverScale;
   const cropX = (displayedWidth - stageSize.width) / 2;
   const cropY = (displayedHeight - stageSize.height) / 2;
+  const mapX = (value: number) => (value * displayedWidth - cropX) / stageSize.width;
+  const mapY = (value: number) => (value * displayedHeight - cropY) / stageSize.height;
 
   return {
-    centerX: (pose.centerX * displayedWidth - cropX) / stageSize.width,
-    centerY: (pose.centerY * displayedHeight - cropY) / stageSize.height,
+    centerX: mapX(pose.centerX),
+    centerY: mapY(pose.centerY),
     width: pose.width * displayedWidth / stageSize.width,
+    height: pose.height === undefined ? undefined : pose.height * displayedHeight / stageSize.height,
+    eyeCenterX: pose.eyeCenterX === undefined ? undefined : mapX(pose.eyeCenterX),
+    eyeCenterY: pose.eyeCenterY === undefined ? undefined : mapY(pose.eyeCenterY),
+    foreheadX: pose.foreheadX === undefined ? undefined : mapX(pose.foreheadX),
+    foreheadY: pose.foreheadY === undefined ? undefined : mapY(pose.foreheadY),
     rotationDeg: pose.rotationDeg,
   };
 }
