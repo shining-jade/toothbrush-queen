@@ -6,7 +6,7 @@ import type { AdminChallengeSaveInput, Challenge } from "@/shared/contracts";
 
 import styles from "./teacher-dashboard.module.css";
 
-const TARGET_DAY_PRESETS = [5, 10, 20, 30] as const;
+const TARGET_DAY_PRESETS = [5, 10, 15, 20, 25, 30] as const;
 
 function calculateEndDate(startDate: string, targetDays: number) {
   const startMs = Date.parse(`${startDate}T00:00:00.000Z`);

@@ -76,8 +76,8 @@
 .filters input,
 .settingsGrid select,
 .settingsGrid input { width: 100%; min-height: 46px; padding: 9px 11px; border: 1px solid #bcc6dc; border-radius: 11px; background: white; color: var(--foreground); }
-.presetButtons { display: flex; gap: 9px; margin-top: 7px; }
-.presetButtons button { min-width: 76px; min-height: 42px; border: 1px solid var(--primary); border-radius: 11px; background: #f5f7ff; color: var(--primary); font-weight: 900; }
+.presetButtons { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; margin-top: 7px; }
+.presetButtons button { min-width: 0; min-height: 42px; border: 1px solid var(--primary); border-radius: 11px; background: #f5f7ff; color: var(--primary); font-weight: 900; }
 .primaryButton,
 .secondaryButton { display: inline-grid; min-height: 46px; place-items: center; padding: 10px 16px; border: 0; border-radius: 12px; font-weight: 900; text-decoration: none; }
 .primaryButton { background: var(--primary); color: white; }
@@ -122,4 +122,5 @@
   .qrContent { grid-template-columns: 1fr; }
   .qrImageWrap { width: min(260px, 100%); margin: 0 auto; }
   .qrButtons { display: grid; grid-template-columns: 1fr 1fr; }
+  .presetButtons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

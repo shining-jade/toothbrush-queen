@@ -23,13 +23,13 @@ function services(): TeacherDashboardServices {
 }
 
 describe("TeacherDashboard", () => {
-  it("applies a twenty-day preset to the target and end date before saving", async () => {
+  it("offers every five-day preset and applies fifteen days before saving", async () => {
     const activeServices = services();
     vi.mocked(activeServices.loadDashboard)
       .mockResolvedValueOnce(dashboard)
       .mockResolvedValueOnce({
         ...dashboard,
-        challenge: { ...dashboard.challenge, targetDays: 20, endDate: "2026-10-09" },
+        challenge: { ...dashboard.challenge, targetDays: 15, endDate: "2026-10-04" },
         summary: { ...dashboard.summary, completedChallenge: 0 },
       });
     render(<TeacherDashboard challengeId="BRUSH5" services={activeServices} />);
@@ -40,15 +40,17 @@ describe("TeacherDashboard", () => {
     expect(screen.getByRole("article", { name: "오늘 미참여" })).toHaveTextContent("2명");
     expect(screen.getByRole("article", { name: "완주 참여자" })).toHaveTextContent("1명");
 
-    expect(screen.getByRole("button", { name: "30일" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "20일" }));
-    expect(screen.getByLabelText("목표 일수")).toHaveValue(20);
-    expect(screen.getByLabelText("종료일")).toHaveValue("2026-10-09");
+    for (const days of [5, 10, 15, 20, 25, 30]) {
+      expect(screen.getByRole("button", { name: `${days}일` })).toBeVisible();
+    }
+    fireEvent.click(screen.getByRole("button", { name: "15일" }));
+    expect(screen.getByLabelText("목표 일수")).toHaveValue(15);
+    expect(screen.getByLabelText("종료일")).toHaveValue("2026-10-04");
     fireEvent.click(screen.getByRole("button", { name: "챌린지 설정 저장" }));
 
     await vi.waitFor(() => expect(activeServices.saveChallenge).toHaveBeenCalledWith(
       "a".repeat(32),
-      expect.objectContaining({ challengeId: "BRUSH5", targetDays: 20, endDate: "2026-10-09" }),
+      expect.objectContaining({ challengeId: "BRUSH5", targetDays: 15, endDate: "2026-10-04" }),
     ));
     await vi.waitFor(() => expect(activeServices.loadDashboard).toHaveBeenCalledTimes(2));
     expect(await screen.findByText("챌린지 설정을 저장했어요.")).toBeVisible();
