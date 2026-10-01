@@ -37,3 +37,11 @@ pnpm verify
 단위·컴포넌트 테스트, 정적 검사, Apps Script 번들, Next.js 프로덕션 빌드, 모바일 Chromium 브라우저 여정을 모두 실행한다.
 
 배포 절차와 실기기 점검표는 [Phase 1 배포 안내](docs/deployment/phase-1.md)를 따른다. 완주 소감은 다음 단계 범위다.
+
+## 다른 학교에 배포하기
+
+다른 학교가 자기 계정으로 독립된 복사본을 운영하도록 넘겨줄 수 있다. 구글시트 쪽은 [설치 마법사 메뉴](docs/deployment/new-school-quickstart.md)가 탭 생성·비밀번호·보안키·Drive 폴더·첫 챌린지 추가를 클릭 몇 번으로 끝내준다. 화면(Next.js) 쪽은 아래 버튼으로 그 학교의 Vercel 계정에 바로 배포한다.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fshining-jade%2Ftoothbrush-queen&env=NEXT_PUBLIC_APPS_SCRIPT_URL&envDescription=%EC%95%B1%EC%8A%A4%20%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8%20%EC%9B%B9%20%EC%95%B1%20%EB%B0%B0%ED%8F%AC%20URL%20(.../exec)&project-name=brush-king&repository-name=brush-king)
+
+전체 절차는 [새 학교 빠른 시작 안내](docs/deployment/new-school-quickstart.md)를 참고한다.
