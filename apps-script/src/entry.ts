@@ -3,6 +3,7 @@ type AppsScriptTextOutput = {
 };
 
 import { createProductionRouter } from "./router";
+import { installWizard } from "./setup/install-wizard";
 
 declare const ContentService: {
   MimeType: { JSON: string };
@@ -25,4 +26,11 @@ function doPost(event: GoogleAppsScript.Events.DoPost) {
   return jsonResponse(createProductionRouter()(request));
 }
 
-(globalThis as typeof globalThis & { __brushKingDoPost: typeof doPost }).__brushKingDoPost = doPost;
+type InstallerGlobal = typeof globalThis & {
+  __brushKingDoPost: typeof doPost;
+  __brushKingInstallWizard: typeof installWizard;
+};
+
+const installerGlobal = globalThis as InstallerGlobal;
+installerGlobal.__brushKingDoPost = doPost;
+installerGlobal.__brushKingInstallWizard = installWizard;
