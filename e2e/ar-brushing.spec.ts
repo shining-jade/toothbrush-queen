@@ -47,6 +47,7 @@ test("student chooses a skin and free brushing records measured time", async ({ 
   await join(page);
   await page.getByRole("button", { name: "자유 양치" }).click();
   for (const card of await page.getByRole("radio").all()) {
+    if (await card.getAttribute("aria-label") === "기본 (스킨 없음)") continue;
     const cardBox = await card.boundingBox();
     const imageBox = await card.locator("img").boundingBox();
     expect(cardBox).not.toBeNull();
@@ -116,6 +117,7 @@ test("camera flow permits skin reselection, readiness skip, and fits mobile widt
 
   await page.getByRole("link", { name: "오늘의 양치 도전하기" }).click();
   await page.getByRole("button", { name: "1분" }).click();
+  await page.getByRole("radio", { name: "냥냥 볼터치" }).click();
   await page.getByRole("button", { name: "냥냥 볼터치 스킨 미리보기" }).click();
   await page.getByRole("button", { name: "확인하고 시작하기" }).click();
 

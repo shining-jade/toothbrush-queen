@@ -9,7 +9,10 @@ describe("SkinSelector", () => {
     const onChange = vi.fn();
     render(<SkinSelector skins={mergeSkinCatalog()} value="cat" onChange={onChange} />);
 
-    expect(screen.getAllByRole("radio")).toHaveLength(15);
+    expect(screen.getAllByRole("radio")).toHaveLength(16);
+    expect(screen.getAllByRole("radio")[0]).toHaveAccessibleName("기본 (스킨 없음)");
+    fireEvent.click(screen.getAllByRole("radio")[0]);
+    expect(onChange).toHaveBeenCalledWith("none");
     expect(screen.getByRole("radio", { name: "냥냥 볼터치" })).toBeChecked();
 
     fireEvent.click(screen.getByRole("radio", { name: "몽글 거품 왕관" }));

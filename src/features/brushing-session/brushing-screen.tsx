@@ -71,8 +71,8 @@ export function BrushingScreen({
   completionServices?: CompletionScreenServices;
 }) {
   const [completionInput, setCompletionInput] = useState<SubmitCompletionInput | null>(null);
-  const [selectedSkin, setSelectedSkin] = useState<string>("cat");
-  const [sessionSkin, setSessionSkin] = useState<ArSkin>(AR_SKINS.cat);
+  const [selectedSkin, setSelectedSkin] = useState<string>("none");
+  const [sessionSkin, setSessionSkin] = useState<ArSkin>(AR_SKINS.none);
   const [skinPreviewConfirmed, setSkinPreviewConfirmed] = useState(false);
   const [faceDetectedSec, setFaceDetectedSec] = useState<number | null>(null);
   const activeServices = useMemo(() => services ?? createBrowserServices(), [services]);
@@ -88,6 +88,7 @@ export function BrushingScreen({
     retryPreflight,
     start,
     beginBrushing,
+    setPhotoPaused,
   } = useBrushingSession(challengeId, activeServices);
   const previousTimerStatus = useRef(state.status);
 
@@ -166,7 +167,7 @@ export function BrushingScreen({
   if (state.status === "choosingSkin") {
     const finalDay = state.progress.acceptedDays === state.progress.targetDays - 1;
     const catalog = mergeSkinCatalog(state.challenge.skins);
-    const activeSkin = finalDay ? AR_SKINS.crown : catalog.find((skin) => skin.id === selectedSkin) ?? AR_SKINS.cat;
+    const activeSkin = finalDay ? AR_SKINS.crown : selectedSkin === "none" ? AR_SKINS.none : catalog.find((skin) => skin.id === selectedSkin) ?? AR_SKINS.none;
     return (
       <section className="brush-card skin-choice-card">
         <h1>{finalDay ? "양치왕 왕관 스킨" : "오늘의 AR 스킨을 골라요"}</h1>
@@ -189,7 +190,7 @@ export function BrushingScreen({
     return (
       <section className="brush-card">
         <h1>카메라 사용 안내</h1>
-        <p>카메라는 AR 스킨 표시와 챌린지 진행을 위해 사용됩니다. 카메라 영상과 얼굴 이미지는 저장되지 않습니다.</p>
+        <p>카메라는 AR 스킨 표시와 챌린지 진행을 위해 사용됩니다. 영상과 얼굴 이미지는 서버에 전송하거나 자동 저장하지 않습니다. 직접 촬영한 사진만 기기에 저장할 수 있습니다.</p>
         <button type="button" className="primary-action" onClick={() => {
           activeServices.completionFeedback.prime();
           void start();
@@ -230,6 +231,9 @@ export function BrushingScreen({
           elapsedSec={state.elapsedSec}
           onFaceDetectedSecChange={updateFaceDetectedSec}
           preparing={state.status === "preparing" && skinPreviewConfirmed}
+          allowPhoto={state.status === "running" || (state.status === "readyToSubmit" && state.durationSec === "free" && state.elapsedSec < 300)}
+          completed={state.status === "readyToSubmit" && (state.durationSec !== "free" || state.elapsedSec >= 300)}
+          onPhotoPauseChange={setPhotoPaused}
           onReady={skinPreviewConfirmed ? beginBrushing : undefined}
         />
       ) : (

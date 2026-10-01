@@ -65,6 +65,56 @@ afterEach(() => {
 });
 
 describe("ArCameraPreview", () => {
+  it("captures a mirrored camera with its skin and shares only after an explicit save", async () => {
+    const { tracker, emit } = fixture();
+    const context = { scale: vi.fn(), save: vi.fn(), restore: vi.fn(), translate: vi.fn(), rotate: vi.fn(), drawImage: vi.fn() };
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback) => callback(new Blob(["photo"], { type: "image/png" })));
+    const revoke = vi.fn();
+    vi.stubGlobal("URL", Object.assign(class {}, { createObjectURL: vi.fn(() => "blob:photo"), revokeObjectURL: revoke }));
+    vi.spyOn(HTMLDialogElement.prototype, "showModal").mockImplementation(() => undefined);
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share, canShare: vi.fn(() => true) });
+    const { unmount } = render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.cat} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} allowPhoto />);
+    await act(async () => undefined);
+    const video = screen.getByLabelText("내 얼굴 카메라 미리보기");
+    Object.defineProperties(video, {
+      videoWidth: { configurable: true, value: 640 },
+      videoHeight: { configurable: true, value: 480 },
+      readyState: { configurable: true, value: 2 },
+    });
+    act(() => emit({ detected: true, pose: facePose(), nowMs: 100 }));
+    const overlay = loadOverlay();
+    Object.defineProperty(overlay, "complete", { configurable: true, value: true });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "사진 찍기" })));
+    expect(context.scale).toHaveBeenCalledWith(-1, 1);
+    expect(context.drawImage).toHaveBeenCalledTimes(2);
+    expect(share).not.toHaveBeenCalled();
+    await act(async () => fireEvent.click(screen.getByText("사진 공유")));
+    expect(share).toHaveBeenCalledWith({ files: [expect.objectContaining({ type: "image/png" })], title: "양치왕 사진" });
+    unmount();
+    expect(revoke).toHaveBeenCalledWith("blob:photo");
+  });
+
+  it("tracks a face without an overlay for the default skin and guards an unready camera", async () => {
+    const { tracker, emit } = fixture();
+    render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.none} tracker={tracker} elapsedSec={1} onFaceDetectedSecChange={vi.fn()} allowPhoto />);
+    await act(async () => undefined);
+    act(() => emit({ detected: true, pose: facePose(), nowMs: 100 }));
+    expect(screen.queryByTestId("ar-skin-overlay")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "사진 찍기" }));
+    expect(screen.getByRole("status")).toHaveTextContent("카메라가 준비되면 다시 촬영해주세요.");
+  });
+
+  it("hides face guidance and photo controls once brushing is complete", async () => {
+    const { tracker, emit } = fixture();
+    render(<ArCameraPreview stream={{} as MediaStream} skin={AR_SKINS.none} tracker={tracker} elapsedSec={60} onFaceDetectedSecChange={vi.fn()} completed />);
+    await act(async () => undefined);
+    act(() => emit({ detected: false, pose: null, nowMs: 100 }));
+    expect(screen.queryByText("얼굴이 화면에 보이도록 해주세요!")).toBeNull();
+    expect(screen.queryByRole("button", { name: "사진 찍기" })).toBeNull();
+  });
+
   it("waits for a detected face and hides the skin as soon as the face is lost", async () => {
     const { tracker, emit } = fixture();
     render(

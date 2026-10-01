@@ -28,6 +28,7 @@ export type ArSkin = {
 };
 
 export const AR_SKINS = {
+  none: { id: "none", label: "기본 (스킨 없음)", src: "", calibration: { anchorX: 0, anchorY: 0, scale: 1, rotationOffset: 0 }, bundled: true },
   cat: { id: "cat", label: "냥냥 볼터치", src: "/ar-skins/cat.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.15, scale: 1.42, rotationOffset: 0 }, bundled: true },
   rabbit: { id: "rabbit", label: "반짝 토끼", src: "/ar-skins/rabbit.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.15, scale: 1.5, rotationOffset: 0 }, bundled: true },
   bear: { id: "bear", label: "하트 곰돌이", src: "/ar-skins/bear.png", placement: "face", calibration: { anchorX: 0, anchorY: -0.14, scale: 1.4, rotationOffset: 0 }, bundled: true },
@@ -44,7 +45,7 @@ export const AR_SKINS = {
   "chick-hat": { id: "chick-hat", label: "노랑 병아리 머리띠", src: "/ar-skins/chick-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.19, scale: 1.3, rotationOffset: 0 }, bundled: true },
   "penguin-hood": { id: "penguin-hood", label: "포근 펭귄 머리띠", src: "/ar-skins/penguin-headband.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0.18, scale: 1.3, rotationOffset: 0 }, bundled: true },
   crown: { id: "crown", label: "양치왕 왕관", src: "/ar-skins/crown.png", placement: "forehead", calibration: { anchorX: 0, anchorY: 0, scale: 1.28, rotationOffset: 0 }, bundled: true },
-} as const satisfies Record<BasicSkinId | "crown", ArSkin>;
+} as const satisfies Record<BasicSkinId | "crown" | "none", ArSkin>;
 
 export const BASIC_SKINS: ArSkin[] = [
   AR_SKINS.cat,

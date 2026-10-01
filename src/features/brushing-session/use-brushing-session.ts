@@ -70,6 +70,9 @@ export function useBrushingSession(
   const [state, setState] = useState<BrushingSessionState>({ status: "loadingProgress", progress: 10 });
   const [preflightAttempt, setPreflightAttempt] = useState(0);
   const operationGeneration = useRef(0);
+  const photoPausedRef = useRef(false);
+  const updateTimerRef = useRef<(() => void) | null>(null);
+  const suspendedMsRef = useRef(0);
   const skinSelection = useRef<{
     mode: BrushingMode;
     challenge: Challenge;
@@ -134,6 +137,8 @@ export function useBrushingSession(
 
   const start = useCallback(async () => {
     if (state.status !== "explaining") return;
+    suspendedMsRef.current = 0;
+    photoPausedRef.current = false;
     const mode = state.mode;
     const generation = ++operationGeneration.current;
     const advance = (progress: number) => setState((current) => current.status === "requestingCamera"
@@ -205,17 +210,23 @@ export function useBrushingSession(
   const timerIsActive = state.status === "running" || state.status === "readyToSubmit";
   const timerDurationSec = timerIsActive ? state.durationSec : null;
   const timerStartedAtMs = timerIsActive ? state.startedAtMs : null;
-  const timerHiddenSec = timerIsActive ? state.hiddenSec : 0;
   const timerStatus = timerIsActive ? state.status : null;
 
   useEffect(() => {
     if (timerDurationSec === null || timerStartedAtMs === null) return;
 
-    let hiddenStartedAt: number | null = document.hidden ? now() : null;
-    let hiddenMs = timerHiddenSec * 1000;
+    let hiddenStartedAt: number | null = document.hidden || photoPausedRef.current ? now() : null;
+    let hiddenMs = suspendedMsRef.current;
 
     const update = () => {
       const currentNow = now();
+      const suspended = document.hidden || photoPausedRef.current;
+      if (suspended && hiddenStartedAt === null) hiddenStartedAt = currentNow;
+      if (!suspended && hiddenStartedAt !== null) {
+        hiddenMs += currentNow - hiddenStartedAt;
+        suspendedMsRef.current = hiddenMs;
+        hiddenStartedAt = null;
+      }
       const liveHiddenMs = hiddenMs + (hiddenStartedAt === null ? 0 : currentNow - hiddenStartedAt);
       const snapshot = createBrushingMachine({
         mode: timerDurationSec,
@@ -234,24 +245,24 @@ export function useBrushingSession(
       });
     };
 
-    const handleVisibility = () => {
-      const currentNow = now();
-      if (document.hidden && hiddenStartedAt === null) hiddenStartedAt = currentNow;
-      if (!document.hidden && hiddenStartedAt !== null) {
-        hiddenMs += currentNow - hiddenStartedAt;
-        hiddenStartedAt = null;
-      }
-      update();
-    };
+    const handleVisibility = update;
+    updateTimerRef.current = update;
 
     const interval = window.setInterval(update, 250);
     document.addEventListener("visibilitychange", handleVisibility);
     update();
     return () => {
+      suspendedMsRef.current = hiddenMs + (hiddenStartedAt === null ? 0 : now() - hiddenStartedAt);
+      updateTimerRef.current = null;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [now, timerDurationSec, timerHiddenSec, timerStartedAtMs, timerStatus]);
+  }, [now, timerDurationSec, timerStartedAtMs, timerStatus]);
+
+  const setPhotoPaused = useCallback((paused: boolean) => {
+    photoPausedRef.current = paused;
+    updateTimerRef.current?.();
+  }, []);
 
   useEffect(() => () => {
     operationGeneration.current += 1;
@@ -271,5 +282,6 @@ export function useBrushingSession(
     retryPreflight,
     start,
     beginBrushing,
+    setPhotoPaused,
   };
 }
